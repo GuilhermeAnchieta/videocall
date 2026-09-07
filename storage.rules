@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Shared clip library is curated (console / Admin SDK), readable by everyone in a call.
+    match /clips/shared/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Personal clips are private to the anonymous-auth uid that uploaded them.
+    match /clips/personal/{uid}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

@@ -1,0 +1,49 @@
+<div class="call-room">
+  <div class="main-area">
+    <div class="stage">
+      @if (connectionState() === 'connecting') {
+        <div class="status-overlay">
+          <span class="material-symbols-outlined spin">progress_activity</span>
+          <p>Entrando na sala {{ roomCode() }}…</p>
+        </div>
+      } @else if (errorMessage()) {
+        <div class="status-overlay">
+          <span class="material-symbols-outlined error-icon">error</span>
+          <p>{{ errorMessage() }}</p>
+        </div>
+      } @else {
+        <div class="video-grid" [class]="gridClass()">
+          @for (participant of displayParticipants(); track participant.identity) {
+            <app-video-tile [participant]="participant" />
+          }
+        </div>
+      }
+    </div>
+
+    @if (participantsPanelOpen()) {
+      <app-participants-panel [participants]="displayParticipants()" (close)="toggleParticipantsPanel()" />
+    }
+
+    @if (chatPanelOpen()) {
+      <app-chat-panel [messages]="chatMessages()" (close)="toggleChatPanel()" (send)="sendChat($event)" />
+    }
+  </div>
+
+  <app-controls-bar
+    [micEnabled]="micEnabled()"
+    [cameraEnabled]="cameraEnabled()"
+    [usingClip]="usingClip()"
+    [participantsOpen]="participantsPanelOpen()"
+    [chatOpen]="chatPanelOpen()"
+    (toggleMic)="toggleMic()"
+    (toggleCamera)="toggleCamera()"
+    (leaveCall)="leaveCall()"
+    (openMediaSwitch)="openMediaSwitch()"
+    (toggleParticipants)="toggleParticipantsPanel()"
+    (toggleChat)="toggleChatPanel()"
+  />
+</div>
+
+@if (mediaSwitchOpen()) {
+  <app-media-switch-modal (close)="mediaSwitchOpen.set(false)" />
+}

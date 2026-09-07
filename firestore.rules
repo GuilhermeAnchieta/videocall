@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rooms are only ever written by the Cloud Functions (Admin SDK bypasses rules).
+    match /rooms/{roomCode} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Shared clip library is curated (console / Admin SDK); personal clips belong to
+    // whoever's anonymous-auth uid created them.
+    match /clips/{clipId} {
+      allow read: if resource.data.scope == 'shared'
+                  || (request.auth != null && resource.data.ownerId == request.auth.uid);
+
+      allow create: if request.auth != null
+                    && request.resource.data.scope == 'personal'
+                    && request.resource.data.ownerId == request.auth.uid;
+
+      allow update, delete: if request.auth != null
+                            && resource.data.scope == 'personal'
+                            && resource.data.ownerId == request.auth.uid;
+    }
+  }
+}

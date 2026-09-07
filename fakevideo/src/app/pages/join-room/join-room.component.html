@@ -1,0 +1,81 @@
+<div class="join-page">
+  <div class="brand">
+    <span class="material-symbols-outlined logo-icon">videocam</span>
+    <span class="brand-name">FakeVideo Meet</span>
+  </div>
+
+  <div class="join-card">
+    <div class="preview">
+      <video #previewVideo class="preview-video" [class.hidden]="!previewCameraEnabled()" autoplay muted playsinline></video>
+
+      @if (!previewCameraEnabled()) {
+        <div class="preview-avatar">
+          <span class="material-symbols-outlined">person</span>
+        </div>
+      }
+
+      <div class="preview-controls">
+        <button
+          type="button"
+          class="control-btn"
+          [class.off]="!previewMicEnabled()"
+          (click)="toggleMic()"
+          [title]="previewMicEnabled() ? 'Desligar microfone' : 'Ligar microfone'"
+        >
+          <span class="material-symbols-outlined">{{ previewMicEnabled() ? 'mic' : 'mic_off' }}</span>
+        </button>
+        <button
+          type="button"
+          class="control-btn"
+          [class.off]="!previewCameraEnabled()"
+          (click)="toggleCamera()"
+          [title]="previewCameraEnabled() ? 'Desligar câmera' : 'Ligar câmera'"
+        >
+          <span class="material-symbols-outlined">{{ previewCameraEnabled() ? 'videocam' : 'videocam_off' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <form class="join-form" (submit)="$event.preventDefault(); join()">
+      <h1>Pronto para entrar?</h1>
+
+      @if (previewError(); as err) {
+        <p class="hint error">{{ err }}</p>
+      }
+
+      <label class="field">
+        <span>Seu nome</span>
+        <input
+          type="text"
+          [ngModel]="displayName()"
+          (ngModelChange)="displayName.set($event)"
+          name="displayName"
+          placeholder="Como devemos te chamar?"
+          autocomplete="off"
+          required
+        />
+      </label>
+
+      <label class="field">
+        <span>Código da sala</span>
+        <input
+          type="text"
+          [ngModel]="roomCode()"
+          (ngModelChange)="roomCode.set($event)"
+          name="roomCode"
+          placeholder="abc-defg-hij"
+          autocomplete="off"
+          required
+        />
+      </label>
+
+      <button type="button" class="link-btn" (click)="createRoom()" [disabled]="creatingRoom()">
+        {{ creatingRoom() ? 'Criando sala…' : 'Criar nova sala' }}
+      </button>
+
+      <button type="submit" class="join-btn" [disabled]="!displayName().trim() || !roomCode().trim() || joining()">
+        Participar agora
+      </button>
+    </form>
+  </div>
+</div>

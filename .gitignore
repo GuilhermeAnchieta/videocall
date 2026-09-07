@@ -1,0 +1,27 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Firebase Functions build output
+functions/lib/
+
+# Firebase local emulator state/logs
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/
+firebase-export-*/
+
+# Capacitor native build artifacts (keep the native *projects* themselves)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/
+ios/App/build/
+ios/App/DerivedData/
+ios/App/App/public/
+
+# System files
+.DS_Store
+.env

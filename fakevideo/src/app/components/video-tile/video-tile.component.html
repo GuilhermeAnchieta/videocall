@@ -1,0 +1,28 @@
+<div class="tile" [class.speaking]="participant().isSpeaking">
+  <video #videoEl class="tile-video" [class.hidden]="!participant().cameraEnabled" autoplay playsinline muted></video>
+  <audio #audioEl autoplay></audio>
+
+  @if (!participant().cameraEnabled) {
+    <div class="avatar">
+      <span class="avatar-circle">{{ initials() }}</span>
+    </div>
+  }
+
+  @if (participant().isLocal && participant().usingClip) {
+    <div class="clip-badge" title="Transmitindo um clipe gravado (visível só para você)">
+      <span class="material-symbols-outlined">movie</span>
+    </div>
+  }
+
+  <div class="tile-footer">
+    <span class="name">
+      {{ participant().name }}
+      @if (participant().isLocal) {
+        <span class="you-tag">(você)</span>
+      }
+    </span>
+    @if (!participant().micEnabled) {
+      <span class="material-symbols-outlined mic-off">mic_off</span>
+    }
+  </div>
+</div>

@@ -1,0 +1,22 @@
+[build]
+  base = ""
+  publish = "fakevideo/dist/fakevideo/browser"
+  functions = "netlify/functions"
+  command = "npm install && cd fakevideo && npm install && npm run build -- --configuration production"
+
+[dev]
+  command = "cd fakevideo && npm start"
+  targetPort = 4200
+  port = 8888
+  publish = "fakevideo/dist/fakevideo/browser"
+  autoLaunch = false
+
+[functions]
+  node_bundler = "esbuild"
+
+# SPA fallback pro Angular Router. Requisições que batem numa function com "path" próprio
+# (/api/create-room, /api/generate-token) são resolvidas antes desse redirect, então não colidem.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
