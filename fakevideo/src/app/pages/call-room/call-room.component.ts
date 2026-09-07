@@ -9,7 +9,6 @@ import { LivekitService } from '../../services/livekit.service';
 import { MediaSourceService } from '../../services/media-source.service';
 import { FakeParticipantsService } from '../../services/fake-participants.service';
 import { RoomService } from '../../services/room.service';
-import { getCurrentUserId } from '../../services/current-user';
 import { ParticipantView } from '../../models/room-state';
 
 @Component({
@@ -109,10 +108,9 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     }
 
     this.roomCode.set(code);
-    // Quem é o dono é só um "bônus" de UI (mostrar/esconder o botão de clipes) — não pode
-    // travar a entrada na chamada se o Firebase (Auth/Firestore) estiver lento ou fora do
-    // ar. Roda em paralelo, sem bloquear o connect ao LiveKit (que é o que importa de verdade).
-    void this.resolveOwnership(code);
+    // Quem criou a sala navega pra cá com "?host=1" (ver join-room.component.ts); quem entra
+    // com um código não tem esse parâmetro e nunca vira dono.
+    this.isOwner.set(this.route.snapshot.queryParamMap.get('host') === '1');
 
     try {
       const { token, livekitUrl } = await this.roomService.getAccessToken(code, name);
@@ -122,19 +120,6 @@ export class CallRoomComponent implements OnInit, OnDestroy {
       this.errorMessage.set(
         'Não foi possível entrar na sala. Verifique sua conexão, as Netlify Functions e o servidor LiveKit.'
       );
-    }
-  }
-
-  private async resolveOwnership(code: string): Promise<void> {
-    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000));
-    try {
-      const [ownerUid, myUid] = (await Promise.race([
-        Promise.all([this.roomService.getRoomOwnerUid(code), getCurrentUserId()]),
-        timeout
-      ])) as [string | undefined, string];
-      this.isOwner.set(!!ownerUid && ownerUid === myUid);
-    } catch {
-      this.isOwner.set(false);
     }
   }
 

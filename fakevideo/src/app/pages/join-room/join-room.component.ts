@@ -82,7 +82,7 @@ export class JoinRoomComponent implements OnInit, OnDestroy {
     try {
       const code = await this.roomService.createRoom();
       this.roomCode.set(code);
-      await this.enterCall(code, name);
+      await this.enterCall(code, name, true);
     } catch {
       this.previewError.set(
         'Não foi possível criar a sala. Verifique se o netlify dev (ou o site publicado) e os emuladores estão rodando.'
@@ -100,10 +100,12 @@ export class JoinRoomComponent implements OnInit, OnDestroy {
     await this.enterCall(code, name);
   }
 
-  private async enterCall(code: string, name: string): Promise<void> {
+  private async enterCall(code: string, name: string, isHost = false): Promise<void> {
     this.joining.set(true);
     this.stopPreview();
-    await this.router.navigate(['/call', code], { queryParams: { name } });
+    await this.router.navigate(['/call', code], {
+      queryParams: { name, host: isHost ? '1' : null }
+    });
   }
 
   private async startPreview(): Promise<void> {
