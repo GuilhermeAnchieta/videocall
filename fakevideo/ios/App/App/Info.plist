@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>FakeVideo Meet</string>
+        <string>GoMeet</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -25,9 +25,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>FakeVideo Meet precisa da câmera para as videochamadas.</string>
+	<string>GoMeet precisa da câmera para as videochamadas.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>FakeVideo Meet precisa do microfone para as videochamadas.</string>
+	<string>GoMeet precisa do microfone para as videochamadas.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

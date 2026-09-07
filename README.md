@@ -1,4 +1,4 @@
-# FakeVideo Meet
+# GoMeet
 
 App de videochamada estilo Google Meet (Angular + Capacitor + LiveKit + Firebase) com um recurso extra:
 qualquer participante pode trocar sua câmera real por um vídeo pré-gravado em loop (com áudio), publicado
