@@ -54,7 +54,8 @@
   font-weight: 500;
 }
 
-.clip-badge {
+.clip-badge,
+.fake-badge {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -69,6 +70,56 @@
   .material-symbols-outlined {
     font-size: 16px;
     color: #fdd663;
+  }
+}
+
+.fake-controls {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 150ms ease, transform 150ms ease;
+  pointer-events: none;
+}
+
+.tile:hover .fake-controls,
+.tile:focus-within .fake-controls {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.fake-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(32, 33, 36, 0.85);
+  color: #e8eaed;
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  &:hover {
+    background: rgba(60, 64, 67, 0.95);
+  }
+
+  &.remove:hover {
+    background: #ea4335;
+  }
+}
+
+@media (hover: none) {
+  .fake-controls {
+    display: none;
   }
 }
 

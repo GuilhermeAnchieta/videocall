@@ -41,11 +41,19 @@ export default async (req: Request, _context: Context): Promise<Response> => {
     return new Response('Method not allowed', { status: 405 });
   }
 
+  let body: { ownerUid?: string } = {};
+  try {
+    body = await req.json();
+  } catch {
+    // corpo vazio é aceitável; a sala simplesmente fica sem dono reconhecido
+  }
+
   try {
     ensureAdmin();
     const roomCode = generateRoomCode();
     await getFirestore().collection('rooms').doc(roomCode).set({
-      createdAt: FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp(),
+      ownerUid: (body.ownerUid ?? '').trim() || null
     });
     return new Response(JSON.stringify({ roomCode }), {
       headers: { 'content-type': 'application/json' }

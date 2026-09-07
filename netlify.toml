@@ -8,7 +8,6 @@
   command = "cd fakevideo && npm start"
   targetPort = 4200
   port = 8888
-  publish = "fakevideo/dist/fakevideo/browser"
   autoLaunch = false
 
 [functions]

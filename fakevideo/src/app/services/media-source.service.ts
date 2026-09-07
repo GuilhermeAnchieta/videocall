@@ -37,7 +37,20 @@ export class MediaSourceService {
     const oldVideo = videoTrack?.mediaStreamTrack;
     const oldAudio = audioTrack?.mediaStreamTrack;
 
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 },
+        facingMode: 'user'
+      },
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1
+      }
+    });
     const newVideo = stream.getVideoTracks()[0];
     const newAudio = stream.getAudioTracks()[0];
 

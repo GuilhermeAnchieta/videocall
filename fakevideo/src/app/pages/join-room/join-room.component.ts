@@ -75,7 +75,20 @@ export class JoinRoomComponent implements OnInit, OnDestroy {
 
   private async startPreview(): Promise<void> {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 },
+          facingMode: 'user'
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1
+        }
+      });
       this.previewStream = stream;
       const el = this.previewVideo()?.nativeElement;
       if (el) {

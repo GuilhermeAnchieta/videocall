@@ -1,6 +1,25 @@
 <div class="call-room">
   <div class="main-area">
     <div class="stage">
+      @if (connectionState() === 'connected') {
+        <div class="top-bar" [class.hidden]="!controlsVisible()">
+          <button type="button" class="code-pill" title="Copiar código da sala" (click)="copyRoomCode()">
+            <span class="material-symbols-outlined">{{ codeCopied() ? 'check' : 'content_copy' }}</span>
+            <span class="code-text">{{ roomCode() }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="participants-pill"
+            title="Ver participantes"
+            (click)="toggleParticipantsPanel()"
+          >
+            <span class="material-symbols-outlined">group</span>
+            <span>{{ participantsCount() }}</span>
+          </button>
+        </div>
+      }
+
       @if (connectionState() === 'connecting') {
         <div class="status-overlay">
           <span class="material-symbols-outlined spin">progress_activity</span>
@@ -12,9 +31,15 @@
           <p>{{ errorMessage() }}</p>
         </div>
       } @else {
-        <div class="video-grid" [class]="gridClass()">
+        <div class="video-grid">
           @for (participant of displayParticipants(); track participant.identity) {
-            <app-video-tile [participant]="participant" />
+            <app-video-tile
+              [participant]="participant"
+              [isOwner]="isOwner()"
+              (toggleFakeMic)="toggleFakeMic(participant.fakeId!, !participant.micEnabled)"
+              (toggleFakeCamera)="toggleFakeCamera(participant.fakeId!, !participant.cameraEnabled)"
+              (removeFake)="removeFake(participant.fakeId!)"
+            />
           }
         </div>
       }
@@ -27,23 +52,27 @@
     @if (chatPanelOpen()) {
       <app-chat-panel [messages]="chatMessages()" (close)="toggleChatPanel()" (send)="sendChat($event)" />
     }
+
+    @if (clipsPanelOpen() && isOwner()) {
+      <app-clips-panel [roomCode]="roomCode()" (close)="closeClipsPanel()" />
+    }
   </div>
 
   <app-controls-bar
+    [visible]="controlsVisible()"
     [micEnabled]="micEnabled()"
     [cameraEnabled]="cameraEnabled()"
     [usingClip]="usingClip()"
+    [isOwner]="isOwner()"
     [participantsOpen]="participantsPanelOpen()"
     [chatOpen]="chatPanelOpen()"
+    [participantsCount]="participantsCount()"
+    [hasUnreadChat]="hasUnreadChat()"
     (toggleMic)="toggleMic()"
     (toggleCamera)="toggleCamera()"
     (leaveCall)="leaveCall()"
-    (openMediaSwitch)="openMediaSwitch()"
+    (toggleClipsPanel)="toggleClipsPanel()"
     (toggleParticipants)="toggleParticipantsPanel()"
     (toggleChat)="toggleChatPanel()"
   />
 </div>
-
-@if (mediaSwitchOpen()) {
-  <app-media-switch-modal (close)="mediaSwitchOpen.set(false)" />
-}

@@ -1,27 +1,36 @@
-import { Component, OnInit, inject, output, signal } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ClipLibraryService } from '../../services/clip-library.service';
 import { MediaSourceService } from '../../services/media-source.service';
+import { FakeParticipantsService } from '../../services/fake-participants.service';
 import { ClipInfo, MediaMode } from '../../models/room-state';
 
 @Component({
-  selector: 'app-media-switch-modal',
+  selector: 'app-clips-panel',
   standalone: true,
-  templateUrl: './media-switch-modal.component.html',
-  styleUrl: './media-switch-modal.component.scss'
+  imports: [FormsModule],
+  templateUrl: './clips-panel.component.html',
+  styleUrl: './clips-panel.component.scss'
 })
-export class MediaSwitchModalComponent implements OnInit {
+export class ClipsPanelComponent implements OnInit {
   private readonly clipLibrary = inject(ClipLibraryService);
   private readonly mediaSource = inject(MediaSourceService);
+  private readonly fakeParticipants = inject(FakeParticipantsService);
 
+  readonly roomCode = input.required<string>();
   readonly close = output<void>();
 
   readonly mode = this.mediaSource.mode;
   readonly activeClip = this.mediaSource.activeClip;
+  readonly fakeList = this.fakeParticipants.participantViews;
 
   readonly clips = signal<ClipInfo[]>([]);
   readonly loading = signal(true);
   readonly uploading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  readonly newFakeName = signal('');
+  readonly addingFakeClipId = signal<string | null>(null);
 
   async ngOnInit(): Promise<void> {
     try {
@@ -41,16 +50,40 @@ export class MediaSwitchModalComponent implements OnInit {
 
   async chooseCamera(): Promise<void> {
     await this.mediaSource.switchToCamera();
-    this.close.emit();
   }
 
-  async chooseClip(clip: ClipInfo): Promise<void> {
+  async chooseMyClip(clip: ClipInfo): Promise<void> {
     try {
       await this.mediaSource.switchToClip(clip);
-      this.close.emit();
     } catch {
       this.errorMessage.set(`Não foi possível reproduzir "${clip.name}".`);
     }
+  }
+
+  async addFakeParticipant(clip: ClipInfo): Promise<void> {
+    const name = this.newFakeName().trim() || clip.name;
+    this.addingFakeClipId.set(clip.id);
+    this.errorMessage.set(null);
+    try {
+      await this.fakeParticipants.add(this.roomCode(), clip, name);
+      this.newFakeName.set('');
+    } catch {
+      this.errorMessage.set(`Não foi possível adicionar "${name}" como participante falso.`);
+    } finally {
+      this.addingFakeClipId.set(null);
+    }
+  }
+
+  async removeFake(id: string): Promise<void> {
+    await this.fakeParticipants.remove(id);
+  }
+
+  async toggleFakeMic(id: string, enabled: boolean): Promise<void> {
+    await this.fakeParticipants.setMicEnabled(id, enabled);
+  }
+
+  async toggleFakeCamera(id: string, enabled: boolean): Promise<void> {
+    await this.fakeParticipants.setCameraEnabled(id, enabled);
   }
 
   async onFileSelected(event: Event): Promise<void> {

@@ -1,6 +1,5 @@
 <div class="tile" [class.speaking]="participant().isSpeaking">
   <video #videoEl class="tile-video" [class.hidden]="!participant().cameraEnabled" autoplay playsinline muted></video>
-  <audio #audioEl autoplay></audio>
 
   @if (!participant().cameraEnabled) {
     <div class="avatar">
@@ -11,6 +10,36 @@
   @if (participant().isLocal && participant().usingClip) {
     <div class="clip-badge" title="Transmitindo um clipe gravado (visível só para você)">
       <span class="material-symbols-outlined">movie</span>
+    </div>
+  }
+
+  @if (isOwner() && participant().isFake) {
+    <div class="fake-badge" title="Participante falso (visível só para você)">
+      <span class="material-symbols-outlined">smart_toy</span>
+    </div>
+
+    <div class="fake-controls">
+      <button
+        type="button"
+        class="fake-btn"
+        [title]="participant().micEnabled ? 'Mutar' : 'Desmutar'"
+        (click)="toggleFakeMic.emit()"
+      >
+        <span class="material-symbols-outlined">{{ participant().micEnabled ? 'mic' : 'mic_off' }}</span>
+      </button>
+      <button
+        type="button"
+        class="fake-btn"
+        [title]="participant().cameraEnabled ? 'Desligar câmera' : 'Ligar câmera'"
+        (click)="toggleFakeCamera.emit()"
+      >
+        <span class="material-symbols-outlined">{{
+          participant().cameraEnabled ? 'videocam' : 'videocam_off'
+        }}</span>
+      </button>
+      <button type="button" class="fake-btn remove" title="Remover participante falso" (click)="removeFake.emit()">
+        <span class="material-symbols-outlined">person_remove</span>
+      </button>
     </div>
   }
 

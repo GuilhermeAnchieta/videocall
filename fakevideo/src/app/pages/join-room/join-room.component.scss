@@ -1,17 +1,30 @@
 :host {
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: #202124;
   color: #e8eaed;
 }
 
 .join-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 32px 16px;
+  padding-top: calc(32px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
   gap: 32px;
+}
+
+@media (max-width: 480px) {
+  .join-page {
+    padding: 20px 12px;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    gap: 20px;
+  }
 }
 
 .brand {
@@ -132,7 +145,7 @@
     border-radius: 8px;
     padding: 10px 12px;
     color: #e8eaed;
-    font-size: 14px;
+    font-size: 16px;
 
     &:focus {
       outline: 2px solid #8ab4f8;

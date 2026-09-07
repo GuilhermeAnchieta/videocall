@@ -25,3 +25,6 @@ ios/App/App/public/
 # System files
 .DS_Store
 .env
+
+# Local Netlify folder
+.netlify

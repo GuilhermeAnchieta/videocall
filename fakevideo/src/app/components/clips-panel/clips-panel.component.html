@@ -1,0 +1,149 @@
+<aside class="panel">
+  <header class="panel-header">
+    <h2>Clipes</h2>
+    <button type="button" class="icon-btn" (click)="close.emit()" title="Fechar">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </header>
+
+  <div class="panel-body">
+    @if (errorMessage(); as msg) {
+      <p class="error">{{ msg }}</p>
+    }
+
+    <section class="section">
+      <h3>Meu vídeo</h3>
+      <p class="hint">Troca a sua própria câmera por um clipe — os outros veem como se fosse sua webcam.</p>
+
+      <button type="button" class="camera-option" [class.active]="mode() === 'camera'" (click)="chooseCamera()">
+        <span class="material-symbols-outlined">videocam</span>
+        <span>Câmera real</span>
+        @if (mode() === 'camera') {
+          <span class="material-symbols-outlined check">check_circle</span>
+        }
+      </button>
+
+      @if (loading()) {
+        <p class="hint">Carregando clipes…</p>
+      } @else if (clips().length > 0) {
+        <div class="clip-grid">
+          @for (clip of clips(); track clip.id) {
+            <button
+              type="button"
+              class="clip-card"
+              [class.active]="isActiveClip(clip, mode())"
+              (click)="chooseMyClip(clip)"
+            >
+              <div class="thumb">
+                @if (clip.thumbnailUrl) {
+                  <img [src]="clip.thumbnailUrl" [alt]="clip.name" />
+                } @else {
+                  <span class="material-symbols-outlined">movie</span>
+                }
+                @if (clip.durationSeconds) {
+                  <span class="duration">{{ formatDuration(clip.durationSeconds) }}</span>
+                }
+              </div>
+              <span class="clip-name">{{ clip.name }}</span>
+              @if (isActiveClip(clip, mode())) {
+                <span class="material-symbols-outlined check">check_circle</span>
+              }
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="section">
+      <h3>Participantes falsos</h3>
+      <p class="hint">Cada clipe entra como uma pessoa nova na chamada, com nome próprio.</p>
+
+      @if (fakeList().length > 0) {
+        <ul class="fake-list">
+          @for (fake of fakeList(); track fake.fakeId) {
+            <li class="fake-row">
+              <span class="fake-name">{{ fake.name }}</span>
+              <span class="fake-actions">
+                <button
+                  type="button"
+                  class="icon-btn small"
+                  [title]="fake.micEnabled ? 'Mutar' : 'Desmutar'"
+                  (click)="toggleFakeMic(fake.fakeId!, !fake.micEnabled)"
+                >
+                  <span class="material-symbols-outlined">{{ fake.micEnabled ? 'mic' : 'mic_off' }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn small"
+                  [title]="fake.cameraEnabled ? 'Desligar câmera' : 'Ligar câmera'"
+                  (click)="toggleFakeCamera(fake.fakeId!, !fake.cameraEnabled)"
+                >
+                  <span class="material-symbols-outlined">{{
+                    fake.cameraEnabled ? 'videocam' : 'videocam_off'
+                  }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn small remove"
+                  title="Remover"
+                  (click)="removeFake(fake.fakeId!)"
+                >
+                  <span class="material-symbols-outlined">person_remove</span>
+                </button>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+
+      <label class="field">
+        <span>Nome do novo participante (opcional)</span>
+        <input
+          type="text"
+          [ngModel]="newFakeName()"
+          (ngModelChange)="newFakeName.set($event)"
+          name="fakeName"
+          placeholder="Ex: Vovó Maria"
+          autocomplete="off"
+        />
+      </label>
+
+      @if (clips().length > 0) {
+        <div class="clip-grid">
+          @for (clip of clips(); track clip.id) {
+            <button
+              type="button"
+              class="clip-card"
+              [disabled]="addingFakeClipId() === clip.id"
+              (click)="addFakeParticipant(clip)"
+            >
+              <div class="thumb">
+                @if (clip.thumbnailUrl) {
+                  <img [src]="clip.thumbnailUrl" [alt]="clip.name" />
+                } @else {
+                  <span class="material-symbols-outlined">movie</span>
+                }
+                @if (addingFakeClipId() === clip.id) {
+                  <span class="material-symbols-outlined spin thumb-spin">progress_activity</span>
+                }
+              </div>
+              <span class="clip-name">{{ clip.name }}</span>
+            </button>
+          }
+        </div>
+      } @else if (!loading()) {
+        <p class="hint">Nenhum clipe ainda. Envie um vídeo abaixo para começar.</p>
+      }
+
+      <label class="upload-btn" [class.disabled]="uploading()">
+        @if (uploading()) {
+          <span class="material-symbols-outlined spin">progress_activity</span>
+        } @else {
+          <span class="material-symbols-outlined">add</span>
+        }
+        Enviar clipe
+        <input type="file" accept="video/*" hidden [disabled]="uploading()" (change)="onFileSelected($event)" />
+      </label>
+    </section>
+  </div>
+</aside>

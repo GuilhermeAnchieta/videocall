@@ -7,6 +7,30 @@
   background: #282a2d;
   color: #e8eaed;
   border-left: 1px solid #3c4043;
+  flex-shrink: 0;
+  animation: slide-in 200ms ease;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .panel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    border-left: none;
+    z-index: 20;
+  }
 }
 
 .panel-header {
@@ -14,7 +38,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
   border-bottom: 1px solid #3c4043;
+  flex-shrink: 0;
 
   h2 {
     font-size: 16px;
@@ -37,6 +63,13 @@
 
   &:hover {
     background: #3c4043;
+  }
+}
+
+@media (max-width: 700px) {
+  .icon-btn {
+    width: 44px;
+    height: 44px;
   }
 }
 

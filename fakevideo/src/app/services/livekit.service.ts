@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { LocalParticipant, LocalTrack, Participant, Room, RoomEvent, Track } from 'livekit-client';
+import { LocalParticipant, LocalTrack, Participant, Room, RoomEvent, Track, VideoPresets } from 'livekit-client';
 import { ChatMessage, ParticipantView } from '../models/room-state';
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected';
@@ -18,7 +18,26 @@ export class LivekitService {
 
   async connect(url: string, token: string): Promise<void> {
     this.connectionState.set('connecting');
-    const room = new Room({ adaptiveStream: true, dynacast: true });
+    const room = new Room({
+      adaptiveStream: true,
+      dynacast: true,
+      audioCaptureDefaults: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1
+      },
+      videoCaptureDefaults: {
+        resolution: VideoPresets.h720.resolution,
+        facingMode: 'user'
+      },
+      publishDefaults: {
+        videoEncoding: VideoPresets.h720.encoding,
+        simulcast: true,
+        dtx: true,
+        red: true
+      }
+    });
     this.room = room;
     this.bindEvents(room);
 
@@ -45,6 +64,24 @@ export class LivekitService {
 
   async setCameraEnabled(enabled: boolean): Promise<void> {
     await this.room?.localParticipant.setCameraEnabled(enabled);
+    this.sync();
+  }
+
+  getActiveMicrophoneId(): string | undefined {
+    return this.room?.getActiveDevice('audioinput');
+  }
+
+  async switchMicrophone(deviceId: string): Promise<void> {
+    await this.room?.switchActiveDevice('audioinput', deviceId);
+    this.sync();
+  }
+
+  getActiveCameraId(): string | undefined {
+    return this.room?.getActiveDevice('videoinput');
+  }
+
+  async switchCamera(deviceId: string): Promise<void> {
+    await this.room?.switchActiveDevice('videoinput', deviceId);
     this.sync();
   }
 
@@ -130,7 +167,8 @@ export class LivekitService {
       cameraEnabled: participant.isCameraEnabled,
       micEnabled: participant.isMicrophoneEnabled,
       isSpeaking: participant.isSpeaking,
-      usingClip: false
+      usingClip: false,
+      isFake: false
     };
   }
 }

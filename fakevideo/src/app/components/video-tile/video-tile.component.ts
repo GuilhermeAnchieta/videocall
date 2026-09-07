@@ -1,5 +1,6 @@
-import { Component, ElementRef, computed, effect, input, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { ParticipantView } from '../../models/room-state';
+import { AudioOutputService } from '../../services/audio-output.service';
 
 @Component({
   selector: 'app-video-tile',
@@ -8,10 +9,16 @@ import { ParticipantView } from '../../models/room-state';
   styleUrl: './video-tile.component.scss'
 })
 export class VideoTileComponent {
+  private readonly audioOutput = inject(AudioOutputService);
+
   readonly participant = input.required<ParticipantView>();
+  readonly isOwner = input<boolean>(false);
+
+  readonly toggleFakeMic = output<void>();
+  readonly toggleFakeCamera = output<void>();
+  readonly removeFake = output<void>();
 
   private readonly videoEl = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
-  private readonly audioEl = viewChild<ElementRef<HTMLAudioElement>>('audioEl');
 
   readonly initials = computed(() => {
     const name = this.participant().name.trim();
@@ -35,10 +42,9 @@ export class VideoTileComponent {
     effect((onCleanup) => {
       const p = this.participant();
       const track = p.audioTrack;
-      const el = this.audioEl()?.nativeElement;
-      if (!p.isLocal && track && el) {
-        track.attach(el);
-        onCleanup(() => track.detach(el));
+      if (!p.isLocal && track) {
+        const connection = this.audioOutput.connect(track);
+        onCleanup(() => connection.disconnect());
       }
     });
   }

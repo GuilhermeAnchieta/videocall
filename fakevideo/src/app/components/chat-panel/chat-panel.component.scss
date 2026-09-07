@@ -7,6 +7,30 @@
   background: #282a2d;
   color: #e8eaed;
   border-left: 1px solid #3c4043;
+  flex-shrink: 0;
+  animation: slide-in 200ms ease;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .panel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    border-left: none;
+    z-index: 20;
+  }
 }
 
 .panel-header {
@@ -14,7 +38,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
   border-bottom: 1px solid #3c4043;
+  flex-shrink: 0;
 
   h2 {
     font-size: 16px;
@@ -37,6 +63,13 @@
 
   &:hover {
     background: #3c4043;
+  }
+}
+
+@media (max-width: 700px) {
+  .icon-btn {
+    width: 44px;
+    height: 44px;
   }
 }
 
@@ -91,17 +124,18 @@
 .composer {
   display: flex;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid #3c4043;
 
   input {
     flex: 1;
+    min-width: 0;
     background: #3c4043;
     border: none;
     border-radius: 20px;
     padding: 10px 14px;
     color: #e8eaed;
-    font-size: 14px;
+    font-size: 16px;
 
     &:focus {
       outline: 2px solid #8ab4f8;
