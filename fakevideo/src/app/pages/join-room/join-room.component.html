@@ -56,26 +56,49 @@
         />
       </label>
 
-      <label class="field">
-        <span>Código da sala</span>
-        <input
-          type="text"
-          [ngModel]="roomCode()"
-          (ngModelChange)="roomCode.set($event)"
-          name="roomCode"
-          placeholder="abc-defg-hij"
-          autocomplete="off"
-          required
-        />
-      </label>
+      @switch (mode()) {
+        @case ('choose') {
+          <p class="hint">Você vai entrar numa sala já criada ou é você quem vai chamar as pessoas?</p>
 
-      <button type="button" class="link-btn" (click)="createRoom()" [disabled]="creatingRoom()">
-        {{ creatingRoom() ? 'Criando sala…' : 'Criar nova sala' }}
-      </button>
+          <button type="button" class="join-btn" [disabled]="!displayName().trim()" (click)="chooseJoin()">
+            Entrar com um código
+          </button>
 
-      <button type="submit" class="join-btn" [disabled]="!displayName().trim() || !roomCode().trim() || joining()">
-        Participar agora
-      </button>
+          <button
+            type="button"
+            class="host-btn"
+            [disabled]="!displayName().trim() || creatingRoom()"
+            (click)="hostRoom()"
+          >
+            {{ creatingRoom() ? 'Criando sala…' : 'Sou o anfitrião — iniciar chamada' }}
+          </button>
+        }
+        @case ('join') {
+          <label class="field">
+            <span>Código da sala</span>
+            <input
+              type="text"
+              [ngModel]="roomCode()"
+              (ngModelChange)="roomCode.set($event)"
+              name="roomCode"
+              placeholder="abc-defg-hij"
+              autocomplete="off"
+              required
+            />
+          </label>
+
+          <button type="button" class="link-btn" (click)="backToChoice()">
+            Voltar
+          </button>
+
+          <button type="submit" class="join-btn" [disabled]="!displayName().trim() || !roomCode().trim() || joining()">
+            Participar agora
+          </button>
+        }
+        @case ('host') {
+          <p class="hint">Criando sua sala…</p>
+        }
+      }
     </form>
   </div>
 </div>

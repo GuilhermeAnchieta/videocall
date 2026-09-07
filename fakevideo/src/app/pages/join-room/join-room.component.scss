@@ -206,3 +206,23 @@
     cursor: default;
   }
 }
+
+.host-btn {
+  background: transparent;
+  color: #8ab4f8;
+  border: 1px solid #8ab4f8;
+  border-radius: 20px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(138, 180, 248, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}

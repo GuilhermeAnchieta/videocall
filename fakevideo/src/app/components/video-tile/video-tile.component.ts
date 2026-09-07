@@ -29,9 +29,12 @@ export class VideoTileComponent {
     return (first + last).toUpperCase();
   });
 
+  private readonly videoTrack = computed(() => this.participant().videoTrack);
+  private readonly remoteAudioTrack = computed(() => (this.participant().isLocal ? undefined : this.participant().audioTrack));
+
   constructor() {
     effect((onCleanup) => {
-      const track = this.participant().videoTrack;
+      const track = this.videoTrack();
       const el = this.videoEl()?.nativeElement;
       if (track && el) {
         track.attach(el);
@@ -40,9 +43,8 @@ export class VideoTileComponent {
     });
 
     effect((onCleanup) => {
-      const p = this.participant();
-      const track = p.audioTrack;
-      if (!p.isLocal && track) {
+      const track = this.remoteAudioTrack();
+      if (track) {
         const connection = this.audioOutput.connect(track);
         onCleanup(() => connection.disconnect());
       }
