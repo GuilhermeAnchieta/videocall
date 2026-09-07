@@ -1,10 +1,11 @@
 {
   "name": "fakevideo-netlify-functions",
   "private": true,
-  "description": "Dependências usadas pelas Netlify Functions em netlify/functions/ (o app Angular tem seu próprio package.json em fakevideo/).",
+  "description": "Depend\u00eancias usadas pelas Netlify Functions em netlify/functions/ (o app Angular tem seu pr\u00f3prio package.json em fakevideo/).",
   "dependencies": {
     "@netlify/functions": "^2.8.2",
     "firebase-admin": "^12.7.0",
-    "livekit-server-sdk": "^2.9.6"
+    "livekit-server-sdk": "^2.9.6",
+    "@netlify/blobs": "^8.2.0"
   }
 }

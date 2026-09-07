@@ -15,7 +15,6 @@ fakevideo/            App Angular (web + Capacitor). Todo o front-end mora aqui.
   android/, ios/         projetos nativos gerados pelo Capacitor
 netlify/functions/     Netlify Functions: generateLiveKitToken, createRoom (substituem as antigas Firebase Functions)
 firestore.rules        Regras do Firestore (salas + biblioteca de clipes)
-storage.rules          Regras do Storage (clipes compartilhados x pessoais)
 firebase.json          Config do Firebase (Functions + emuladores)
 ```
 
@@ -33,7 +32,7 @@ firebase.json          Config do Firebase (Functions + emuladores)
 ## Rodando localmente (sem nenhuma conta na nuvem, 100% de graça)
 
 Tudo funciona local: um LiveKit server de desenvolvimento + o Firebase Emulator Suite (só
-Firestore/Storage/Auth) + `netlify dev` (rodando o Angular junto com as duas funções).
+Firestore/Auth) + `netlify dev` (rodando o Angular, as functions e o Netlify Blobs local juntos).
 
 ### 1. LiveKit local
 
@@ -45,12 +44,12 @@ livekit-server --dev
 Sobe o LiveKit em `ws://localhost:7880` com as credenciais de desenvolvimento padrão
 (`devkey` / `secret`) — já configuradas no `.env` da raiz do projeto.
 
-### 2. Firebase Emulator Suite (Firestore + Storage + Auth — sem Functions)
+### 2. Firebase Emulator Suite (Firestore + Auth — sem Functions nem Storage)
 
 Requer **Java 21+**.
 
 ```bash
-firebase emulators:start --only firestore,storage,auth
+firebase emulators:start --only firestore,auth
 ```
 
 Emulator UI fica em http://127.0.0.1:4000.
@@ -70,35 +69,33 @@ pessoas na mesma sala.
 O `.env` da raiz já vem preenchido com tudo que é preciso pra isso funcionar sem cadastrar
 nada em lugar nenhum: LiveKit local + emulador do Firestore.
 
-### Semeando um clipe na biblioteca compartilhada
+### Testando o upload de clipe
 
-A biblioteca "compartilhada" (visível para todos na sala) é curada — não existe upload de clipe
-compartilhado pelo próprio app (só clipes pessoais). Para testar localmente, suba um vídeo pelo
-Emulator UI (Storage, em `clips/shared/`) e crie um documento correspondente na coleção `clips` do
-Firestore com o formato:
-
-```json
-{
-  "name": "Nome do clipe",
-  "url": "http://127.0.0.1:9199/v0/b/demo-fakevideo.appspot.com/o/clips%2Fshared%2Farquivo.mp4?alt=media",
-  "scope": "shared",
-  "durationSeconds": 8
-}
-```
+Cada pessoa sobe seu próprio clipe pré-gravado direto pelo app (modal "Trocar mídia" → "Enviar
+clipe"). O arquivo vai pro Netlify Blobs (local: um store isolado do `netlify dev`; produção: o
+Blobs de verdade do site) e só o metadado (nome, dono) vai pro Firestore. Não existe biblioteca
+"compartilhada" curada nessa primeira versão — cada participante usa os clipes que ele mesmo
+enviou, o que já é suficiente pra brincadeira (o clipe é publicado como a própria câmera da
+pessoa durante a chamada; os outros participantes nunca precisam acessá-lo diretamente).
 
 ## Indo para produção — também 100% de graça, sem cartão de crédito
 
 Cloud Functions do Firebase exige o plano pago Blaze mesmo pra uso gratuito, então esse projeto
-não usa mais Firebase Functions: as duas funções (gerar token do LiveKit e criar sala) viraram
-**Netlify Functions**, que rodam de graça sem pedir cartão. O Firebase continua sendo usado só
-pra Firestore + Storage + Auth anônimo, que funcionam no plano gratuito **Spark** (sem cartão).
+não usa mais Firebase Functions: as três funções que precisam de servidor (gerar token do
+LiveKit, criar sala, e enviar/servir clipe) viraram **Netlify Functions**, que rodam de graça sem
+pedir cartão. Pelo mesmo motivo, os arquivos de vídeo dos clipes vão pro **Netlify Blobs**
+(também grátis, incluso no plano free da Netlify) em vez do Firebase Storage — desde set/2024 a
+Google exige o plano Blaze só pra criar um bucket novo do Storage, mesmo que o uso fique de
+graça. O Firebase, aqui, cuida só de Firestore + Auth anônimo, que continuam de graça no plano
+**Spark** (sem cartão).
 
 1. **LiveKit Cloud** (plano *Build*, grátis, sem cartão — 5.000 minutos de participante/mês
    inclusos): crie um projeto em https://cloud.livekit.io e copie, em *Settings > Keys*, a
    WebSocket URL, a API Key e o API Secret.
 2. **Firebase** (plano *Spark*, grátis, sem cartão — **não faça upgrade pro Blaze**): crie um
-   projeto em https://console.firebase.google.com, habilite Firestore (modo produção), Storage
-   e Authentication (método Anônimo). Em *Configurações do projeto > Contas de serviço*, clique
+   projeto em https://console.firebase.google.com, habilite Firestore (modo produção) e
+   Authentication (método Anônimo). **Não habilite o Storage** — ele pede upgrade pro Blaze.
+   Em *Configurações do projeto > Contas de serviço*, clique
    em "Gerar nova chave privada" — isso baixa um JSON com `project_id`, `client_email` e
    `private_key`, que é o que as Netlify Functions usam pra escrever no Firestore sem precisar
    do SDK cliente autenticado.
@@ -110,9 +107,9 @@ pra Firestore + Storage + Auth anônimo, que funcionam no plano gratuito **Spark
    variables*) com o conteúdo de `.env.example`: `LIVEKIT_URL`, `LIVEKIT_API_KEY`,
    `LIVEKIT_API_SECRET`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`
    (a chave privada do JSON, com as quebras de linha `\n` mantidas como estão no arquivo).
-5. Deploy das regras do Firestore/Storage (não precisa de Blaze pra isso):
+5. Deploy das regras do Firestore (não precisa de Blaze pra isso):
    ```bash
-   firebase deploy --only firestore:rules,storage:rules
+   firebase deploy --only firestore:rules
    ```
 6. `netlify deploy --prod` (ou deixe a Netlify buildar automaticamente a cada push, se conectou
    via GitHub) — o comando de build já compila o Angular em modo produção.

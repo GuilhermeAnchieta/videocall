@@ -4,11 +4,11 @@ export const environment = {
   // '' = mesma origem (o site publicado na Netlify serve o Angular + as functions no mesmo domínio).
   apiBase: '',
   firebase: {
-    apiKey: 'YOUR_FIREBASE_API_KEY',
-    authDomain: 'YOUR_PROJECT.firebaseapp.com',
-    projectId: 'YOUR_PROJECT',
-    storageBucket: 'YOUR_PROJECT.appspot.com',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    appId: 'YOUR_APP_ID'
+    apiKey: 'AIzaSyCiGHdQ0rvba4eNFzqbcb_6jp8NRaBi-9Y',
+    authDomain: 'videocall-180f0.firebaseapp.com',
+    projectId: 'videocall-180f0',
+    storageBucket: 'videocall-180f0.firebasestorage.app',
+    messagingSenderId: '160720582384',
+    appId: '1:160720582384:web:99f7ba005c011fb8b17435'
   }
 };
