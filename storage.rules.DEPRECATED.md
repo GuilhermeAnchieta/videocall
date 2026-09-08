@@ -1,5 +1,5 @@
-# Não usado
+# Not used
 
-`storage.rules` ficou aqui de referência, mas o projeto não usa mais o Firebase Storage
-(ver README, seção "Indo para produção") — os clipes vão pro Netlify Blobs. Pode apagar
-os dois (`storage.rules` e este arquivo) com segurança.
+`storage.rules` was kept here for reference, but the project no longer uses Firebase Storage
+(see README, "Going to production" section) — clips go to Netlify Blobs instead. Both files
+(`storage.rules` and this one) can be safely deleted.

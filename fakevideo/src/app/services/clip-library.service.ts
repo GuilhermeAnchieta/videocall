@@ -8,9 +8,9 @@ import { ClipInfo } from '../models/room-state';
 const CLIPS_COLLECTION = 'clips';
 
 /**
- * Metadados dos clipes ficam no Firestore (grátis no plano Spark). Os bytes do vídeo em si
- * vão pro Netlify Blobs via a function `upload-clip` — não usamos Firebase Storage porque,
- * desde set/2024, provisionar um bucket novo exige o plano pago Blaze mesmo pra uso gratuito.
+ * Clip metadata lives in Firestore (free on the Spark plan). The video bytes themselves
+ * go to Netlify Blobs via the `upload-clip` function — we don't use Firebase Storage because,
+ * since Sept/2024, provisioning a new bucket requires the paid Blaze plan even for free-tier usage.
  */
 @Injectable({ providedIn: 'root' })
 export class ClipLibraryService {
@@ -38,7 +38,7 @@ export class ClipLibraryService {
     form.append('ownerId', uid);
 
     const res = await fetch(`${environment.apiBase}/api/upload-clip`, { method: 'POST', body: form });
-    if (!res.ok) throw new Error('Falha ao enviar o clipe');
+    if (!res.ok) throw new Error('Failed to upload clip');
     return (await res.json()) as ClipInfo;
   }
 }

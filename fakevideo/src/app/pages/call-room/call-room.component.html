@@ -3,7 +3,7 @@
     <div class="stage">
       @if (connectionState() === 'connected') {
         <div class="top-bar" [class.hidden]="!controlsVisible()">
-          <button type="button" class="code-pill" title="Copiar código da sala" (click)="copyRoomCode()">
+          <button type="button" class="code-pill" title="Copy room code" (click)="copyRoomCode()">
             <span class="material-symbols-outlined">{{ codeCopied() ? 'check' : 'content_copy' }}</span>
             <span class="code-text">{{ roomCode() }}</span>
           </button>
@@ -11,7 +11,7 @@
           <button
             type="button"
             class="participants-pill"
-            title="Ver participantes"
+            title="View participants"
             (click)="toggleParticipantsPanel()"
           >
             <span class="material-symbols-outlined">group</span>
@@ -23,7 +23,7 @@
       @if (connectionState() === 'connecting') {
         <div class="status-overlay">
           <span class="material-symbols-outlined spin">progress_activity</span>
-          <p>Entrando na sala {{ roomCode() }}…</p>
+          <p>Joining room {{ roomCode() }}…</p>
         </div>
       } @else if (errorMessage()) {
         <div class="status-overlay">

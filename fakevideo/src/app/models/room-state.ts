@@ -22,9 +22,9 @@ export interface ParticipantView {
   micEnabled: boolean;
   isSpeaking: boolean;
   usingClip: boolean;
-  /** Participante "bot": uma conexão LiveKit separada publicando um clipe, controlada pelo dono da sala. */
+  /** "Bot" participant: a separate LiveKit connection publishing a clip, controlled by the room owner. */
   isFake: boolean;
-  /** Id interno no FakeParticipantsService (presente só quando isFake é true). */
+  /** Internal id in FakeParticipantsService (present only when isFake is true). */
   fakeId?: string;
 }
 

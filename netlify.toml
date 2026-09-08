@@ -13,8 +13,8 @@
 [functions]
   node_bundler = "esbuild"
 
-# SPA fallback pro Angular Router. Requisições que batem numa function com "path" próprio
-# (/api/create-room, /api/generate-token) são resolvidas antes desse redirect, então não colidem.
+# SPA fallback for the Angular Router. Requests that match a function with its own "path"
+# (/api/create-room, /api/generate-token) are resolved before this redirect, so they don't collide.
 [[redirects]]
   from = "/*"
   to = "/index.html"

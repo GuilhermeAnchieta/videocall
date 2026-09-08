@@ -11,8 +11,8 @@ interface CreateRoomResponse {
 }
 
 /**
- * Fala com as duas Netlify Functions (netlify/functions/) que substituem as antigas
- * Firebase Cloud Functions — assim o projeto não depende do plano pago (Blaze) do Firebase.
+ * Talks to the two Netlify Functions (netlify/functions/) that replace the old
+ * Firebase Cloud Functions — this way the project doesn't depend on Firebase's paid (Blaze) plan.
  */
 @Injectable({ providedIn: 'root' })
 export class RoomService {
@@ -20,7 +20,7 @@ export class RoomService {
 
   async createRoom(): Promise<string> {
     const res = await fetch(`${this.apiBase}/api/create-room`, { method: 'POST' });
-    if (!res.ok) throw new Error('Falha ao criar sala');
+    if (!res.ok) throw new Error('Failed to create room');
     const data = (await res.json()) as CreateRoomResponse;
     return data.roomCode;
   }
@@ -31,7 +31,7 @@ export class RoomService {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ roomCode, displayName })
     });
-    if (!res.ok) throw new Error('Falha ao gerar token de acesso');
+    if (!res.ok) throw new Error('Failed to generate access token');
     return (await res.json()) as GenerateTokenResponse;
   }
 }

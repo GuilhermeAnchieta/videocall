@@ -45,9 +45,9 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   readonly displayParticipants = computed<ParticipantView[]>(() => {
     const usingClip = this.mediaSource.mode() === 'clip';
     const fakeViews = this.fakeParticipants.participantViews();
-    // No lado do dono, a conexão principal também enxerga cada bot como um participante
-    // remoto comum (é uma conexão LiveKit de verdade); descarta essa versão "crua" pra
-    // não duplicar o tile e usar a versão com isFake/fakeId (controles no hover).
+    // On the owner's side, the main connection also sees each bot as a regular remote
+    // participant (it's a real LiveKit connection); discard that "raw" version to avoid
+    // duplicating the tile and use the version with isFake/fakeId instead (hover controls).
     const fakeIdentities = new Set(fakeViews.map((f) => f.identity));
     const real = this.livekit
       .participants()
@@ -108,8 +108,8 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     }
 
     this.roomCode.set(code);
-    // Quem criou a sala navega pra cá com "?host=1" (ver join-room.component.ts); quem entra
-    // com um código não tem esse parâmetro e nunca vira dono.
+    // Whoever created the room navigates here with "?host=1" (see join-room.component.ts);
+    // whoever joins with a code doesn't have that param and never becomes owner.
     this.isOwner.set(this.route.snapshot.queryParamMap.get('host') === '1');
 
     try {
@@ -118,7 +118,7 @@ export class CallRoomComponent implements OnInit, OnDestroy {
       this.scheduleControlsHide();
     } catch {
       this.errorMessage.set(
-        'Não foi possível entrar na sala. Verifique sua conexão, as Netlify Functions e o servidor LiveKit.'
+        'Could not join the room. Check your connection, the Netlify Functions, and the LiveKit server.'
       );
     }
   }

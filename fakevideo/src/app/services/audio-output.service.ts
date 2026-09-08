@@ -9,12 +9,12 @@ const SINK_ID_SUPPORTED =
   typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
 
 /**
- * Toca o áudio remoto (participantes reais e falsos) através de um compressor/limiter em
- * vez de um <audio> cru, e permite escolher o dispositivo de saída (alto-falante/fone).
- * Isso não resolve eco acústico entre dois aparelhos físicos próximos (aquilo é um
- * problema de captação de microfone, não de software — use fone de ouvido ao testar com
- * dois dispositivos na mesma sala), mas evita que picos de volume e artefatos
- * agudos/estourados cheguem sem tratamento, e deixa escolher pra onde o som vai.
+ * Plays remote audio (real and fake participants) through a compressor/limiter instead
+ * of a raw <audio> element, and allows choosing the output device (speaker/headphones).
+ * This doesn't fix acoustic echo between two physical devices nearby (that's a
+ * microphone-pickup problem, not a software one — use headphones when testing with
+ * two devices in the same room), but it keeps volume spikes and harsh/clipped
+ * artifacts from coming through untreated, and lets you choose where the sound goes.
  */
 @Injectable({ providedIn: 'root' })
 export class AudioOutputService {
@@ -35,7 +35,7 @@ export class AudioOutputService {
     return this.context;
   }
 
-  /** Conecta o áudio de um participante remoto a um limiter suave; retorna como desconectar. */
+  /** Connects a remote participant's audio to a gentle limiter; returns how to disconnect. */
   connect(track: Track): { disconnect(): void } {
     const ctx = this.getContext();
     const stream = new MediaStream([track.mediaStreamTrack]);
@@ -48,14 +48,14 @@ export class AudioOutputService {
     compressor.attack.value = 0.003;
     compressor.release.value = 0.25;
 
-    // Corta um pouco de agudo excessivo (feedback/artefatos de compressão de vídeo captureStream).
+    // Cuts a bit of excess treble (feedback/artifacts from captureStream video compression).
     const highShelf = ctx.createBiquadFilter();
     highShelf.type = 'highshelf';
     highShelf.frequency.value = 6000;
     highShelf.gain.value = -6;
 
-    // Sai por um <audio> (em vez de ctx.destination) só pra poder escolher o dispositivo
-    // de saída via setSinkId — Web Audio puro não permite escolher o alto-falante.
+    // Outputs through an <audio> element (instead of ctx.destination) just so we can choose
+    // the output device via setSinkId — plain Web Audio doesn't allow picking the speaker.
     const destinationNode = ctx.createMediaStreamDestination();
     source.connect(compressor).connect(highShelf).connect(destinationNode);
 
@@ -80,7 +80,7 @@ export class AudioOutputService {
     };
   }
 
-  /** Troca o alto-falante/fone usado para tocar todo áudio remoto já conectado (e o futuro). */
+  /** Switches the speaker/headphones used to play all remote audio already connected (and future). */
   async setOutputDevice(deviceId: string): Promise<void> {
     this.outputDeviceId = deviceId;
     this.outputDevice.set(deviceId);

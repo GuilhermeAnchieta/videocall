@@ -8,13 +8,13 @@
   }
 
   @if (participant().isLocal && participant().usingClip) {
-    <div class="clip-badge" title="Transmitindo um clipe gravado (visível só para você)">
+    <div class="clip-badge" title="Playing a recorded clip (visible only to you)">
       <span class="material-symbols-outlined">movie</span>
     </div>
   }
 
   @if (isOwner() && participant().isFake) {
-    <div class="fake-badge" title="Participante falso (visível só para você)">
+    <div class="fake-badge" title="Fake participant (visible only to you)">
       <span class="material-symbols-outlined">smart_toy</span>
     </div>
 
@@ -22,7 +22,7 @@
       <button
         type="button"
         class="fake-btn"
-        [title]="participant().micEnabled ? 'Mutar' : 'Desmutar'"
+        [title]="participant().micEnabled ? 'Mute' : 'Unmute'"
         (click)="toggleFakeMic.emit()"
       >
         <span class="material-symbols-outlined">{{ participant().micEnabled ? 'mic' : 'mic_off' }}</span>
@@ -30,14 +30,14 @@
       <button
         type="button"
         class="fake-btn"
-        [title]="participant().cameraEnabled ? 'Desligar câmera' : 'Ligar câmera'"
+        [title]="participant().cameraEnabled ? 'Turn off camera' : 'Turn on camera'"
         (click)="toggleFakeCamera.emit()"
       >
         <span class="material-symbols-outlined">{{
           participant().cameraEnabled ? 'videocam' : 'videocam_off'
         }}</span>
       </button>
-      <button type="button" class="fake-btn remove" title="Remover participante falso" (click)="removeFake.emit()">
+      <button type="button" class="fake-btn remove" title="Remove fake participant" (click)="removeFake.emit()">
         <span class="material-symbols-outlined">person_remove</span>
       </button>
     </div>
@@ -47,7 +47,7 @@
     <span class="name">
       {{ participant().name }}
       @if (participant().isLocal) {
-        <span class="you-tag">(você)</span>
+        <span class="you-tag">(you)</span>
       }
     </span>
     @if (!participant().micEnabled) {

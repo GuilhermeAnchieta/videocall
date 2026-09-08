@@ -1,12 +1,12 @@
 <div class="controls-bar">
   <div class="control-pair" #micWrap>
     @if (micMenuOpen()) {
-      <div class="device-menu" role="dialog" aria-label="Escolher microfone e alto-falante">
+      <div class="device-menu" role="dialog" aria-label="Choose microphone and speaker">
         <label class="device-field">
           <span class="material-symbols-outlined">mic</span>
           <select [ngModel]="selectedMicId()" (ngModelChange)="onMicSelected($event)">
             @for (mic of microphones(); track mic.deviceId) {
-              <option [value]="mic.deviceId">{{ mic.label || 'Microfone' }}</option>
+              <option [value]="mic.deviceId">{{ mic.label || 'Microphone' }}</option>
             }
           </select>
         </label>
@@ -16,11 +16,11 @@
           @if (sinkIdSupported) {
             <select [ngModel]="selectedSpeakerId()" (ngModelChange)="onSpeakerSelected($event)">
               @for (speaker of speakers(); track speaker.deviceId) {
-                <option [value]="speaker.deviceId">{{ speaker.label || 'Alto-falante' }}</option>
+                <option [value]="speaker.deviceId">{{ speaker.label || 'Speaker' }}</option>
               }
             </select>
           } @else {
-            <span class="hint">Seu navegador não permite trocar a saída de áudio.</span>
+            <span class="hint">Your browser doesn't support changing audio output.</span>
           }
         </label>
       </div>
@@ -30,7 +30,7 @@
       type="button"
       class="control-btn"
       [class.off]="!micEnabled()"
-      [title]="micEnabled() ? 'Desligar microfone' : 'Ligar microfone'"
+      [title]="micEnabled() ? 'Turn off microphone' : 'Turn on microphone'"
       (click)="toggleMic.emit()"
     >
       <span class="material-symbols-outlined">{{ micEnabled() ? 'mic' : 'mic_off' }}</span>
@@ -39,7 +39,7 @@
       type="button"
       class="chevron-btn"
       [class.active]="micMenuOpen()"
-      title="Escolher microfone e alto-falante"
+      title="Choose microphone and speaker"
       (click)="toggleMicMenu()"
     >
       <span class="material-symbols-outlined">expand_less</span>
@@ -48,17 +48,17 @@
 
   <div class="control-pair" #cameraWrap>
     @if (cameraMenuOpen()) {
-      <div class="device-menu" role="dialog" aria-label="Escolher câmera">
+      <div class="device-menu" role="dialog" aria-label="Choose camera">
         <label class="device-field">
           <span class="material-symbols-outlined">videocam</span>
           @if (cameras().length > 0) {
             <select [ngModel]="selectedCameraId()" (ngModelChange)="onCameraSelected($event)">
               @for (cam of cameras(); track cam.deviceId) {
-                <option [value]="cam.deviceId">{{ cam.label || 'Câmera' }}</option>
+                <option [value]="cam.deviceId">{{ cam.label || 'Camera' }}</option>
               }
             </select>
           } @else {
-            <span class="hint">Nenhuma câmera encontrada.</span>
+            <span class="hint">No camera found.</span>
           }
         </label>
       </div>
@@ -68,7 +68,7 @@
       type="button"
       class="control-btn"
       [class.off]="!cameraEnabled()"
-      [title]="cameraEnabled() ? 'Desligar câmera' : 'Ligar câmera'"
+      [title]="cameraEnabled() ? 'Turn off camera' : 'Turn on camera'"
       (click)="toggleCamera.emit()"
     >
       <span class="material-symbols-outlined">{{ cameraEnabled() ? 'videocam' : 'videocam_off' }}</span>
@@ -77,7 +77,7 @@
       type="button"
       class="chevron-btn"
       [class.active]="cameraMenuOpen()"
-      title="Escolher câmera"
+      title="Choose camera"
       (click)="toggleCameraMenu()"
     >
       <span class="material-symbols-outlined">expand_less</span>
@@ -89,7 +89,7 @@
       type="button"
       class="control-btn"
       [class.active]="usingClip()"
-      title="Clipes (trocar sua câmera ou adicionar participantes falsos)"
+      title="Clips (swap your camera or add fake participants)"
       (click)="toggleClipsPanel.emit()"
     >
       <span class="material-symbols-outlined">movie</span>
@@ -100,7 +100,7 @@
     type="button"
     class="control-btn"
     [class.active]="participantsOpen()"
-    title="Participantes"
+    title="Participants"
     (click)="toggleParticipants.emit()"
   >
     <span class="material-symbols-outlined">group</span>
@@ -124,11 +124,11 @@
 
   <div class="leave-wrap" #leaveWrap>
     @if (confirmingLeave()) {
-      <div class="leave-confirm" role="dialog" aria-label="Confirmar saída da chamada">
-        <span>Sair da chamada?</span>
+      <div class="leave-confirm" role="dialog" aria-label="Confirm leaving the call">
+        <span>Leave the call?</span>
         <div class="leave-confirm-actions">
-          <button type="button" class="cancel-btn" (click)="cancelLeave()">Cancelar</button>
-          <button type="button" class="confirm-btn" (click)="confirmLeave()">Sair</button>
+          <button type="button" class="cancel-btn" (click)="cancelLeave()">Cancel</button>
+          <button type="button" class="confirm-btn" (click)="confirmLeave()">Leave</button>
         </div>
       </div>
     }
@@ -136,7 +136,7 @@
       type="button"
       class="control-btn leave"
       [class.armed]="confirmingLeave()"
-      title="Sair da chamada"
+      title="Leave the call"
       (click)="requestLeave()"
     >
       <span class="material-symbols-outlined">call_end</span>

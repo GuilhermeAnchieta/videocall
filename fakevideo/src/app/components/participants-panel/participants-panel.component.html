@@ -1,7 +1,7 @@
 <aside class="panel">
   <header class="panel-header">
-    <h2>Participantes ({{ participants().length }})</h2>
-    <button type="button" class="icon-btn" (click)="close.emit()" title="Fechar">
+    <h2>Participants ({{ participants().length }})</h2>
+    <button type="button" class="icon-btn" (click)="close.emit()" title="Close">
       <span class="material-symbols-outlined">close</span>
     </button>
   </header>
@@ -9,7 +9,7 @@
   <ul class="participant-list">
     @for (p of participants(); track p.identity) {
       <li class="participant-row">
-        <span class="row-name">{{ p.name }}@if (p.isLocal) { <span class="you-tag">(você)</span> }</span>
+        <span class="row-name">{{ p.name }}@if (p.isLocal) { <span class="you-tag">(you)</span> }</span>
         <span class="row-icons">
           @if (!p.micEnabled) {
             <span class="material-symbols-outlined muted-icon">mic_off</span>

@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
   useEmulators: true,
-  // '' = mesma origem (funciona com `netlify dev`, que serve o Angular + as functions juntos).
+  // '' = same origin (works with `netlify dev`, which serves the Angular app + the functions together).
   apiBase: '',
   firebase: {
     apiKey: 'demo-key',

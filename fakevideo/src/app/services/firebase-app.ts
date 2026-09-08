@@ -3,9 +3,9 @@ import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { environment } from '../../environments/environment';
 
-// Firebase aqui só cuida de Firestore + Auth anônimo (plano gratuito Spark, sem cartão).
-// Os arquivos de vídeo dos clipes vão pro Netlify Blobs (ver netlify/functions/upload-clip.mts)
-// em vez do Firebase Storage, que hoje exige o plano pago Blaze pra provisionar um bucket novo.
+// Firebase here only handles Firestore + anonymous Auth (free Spark plan, no card required).
+// Clip video files go to Netlify Blobs (see netlify/functions/upload-clip.mts)
+// instead of Firebase Storage, which now requires the paid Blaze plan to provision a new bucket.
 const app = initializeApp(environment.firebase);
 
 export const firestore = getFirestore(app);

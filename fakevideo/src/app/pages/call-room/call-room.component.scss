@@ -166,10 +166,10 @@
 }
 
 /*
- * Todo tile tem o mesmo tamanho e a mesma proporção (16:9) pra todo mundo, não importa
- * quantos participantes tem na chamada nem o formato da tela de quem está vendo — um
- * celular em pé não vira um tile "retrato" gigante, fica um retângulo padrão como os
- * outros, só que centralizado. auto-fit quebra linha e cresce a grade conforme precisa.
+ * Every tile is the same size and aspect ratio (16:9) for everyone, no matter how many
+ * participants are in the call or the screen shape of whoever's watching — a phone held
+ * upright doesn't become a giant "portrait" tile, it stays a standard rectangle like the
+ * others, just centered. auto-fit wraps and grows the grid as needed.
  */
 .video-grid {
   height: 100%;

@@ -17,10 +17,10 @@ interface FakeParticipant {
 }
 
 /**
- * Cada "participante falso" é uma conexão LiveKit própria (identidade e Room dedicadas)
- * publicando o vídeo/áudio capturados de um clipe — por isso aparece pros outros
- * participantes reais como se fosse uma pessoa a mais na chamada, e não uma marcação
- * visual só do lado do dono.
+ * Each "fake participant" is its own LiveKit connection (dedicated identity and Room)
+ * publishing the video/audio captured from a clip — that's why it shows up to other
+ * real participants as an actual extra person in the call, not just a visual marker
+ * on the owner's side.
  */
 @Injectable({ providedIn: 'root' })
 export class FakeParticipantsService {
@@ -65,7 +65,7 @@ export class FakeParticipantsService {
     videoEl.loop = true;
     videoEl.preload = 'auto';
     videoEl.crossOrigin = 'anonymous';
-    videoEl.muted = false; // precisa ficar sem mute pro captureStream() carregar o áudio
+    videoEl.muted = false; // must stay unmuted for captureStream() to carry audio
     videoEl.style.display = 'none';
     document.body.appendChild(videoEl);
 

@@ -1,8 +1,9 @@
-# Não usado mais
+# No longer used
 
-Essa pasta (Firebase Cloud Functions) foi substituída pelas Netlify Functions em
-`../netlify/functions/` — mesma lógica (`generateLiveKitToken` -> `generate-livekit-token.mts`,
-`createRoom` -> `create-room.mts`), só que rodando de graça (Netlify Functions não exige o
-plano pago Blaze do Firebase, que Cloud Functions exige mesmo sem sair do free tier de uso).
+This folder (Firebase Cloud Functions) was replaced by the Netlify Functions in
+`../netlify/functions/` — same logic (`generateLiveKitToken` -> `generate-livekit-token.mts`,
+`createRoom` -> `create-room.mts`), just running for free (Netlify Functions doesn't require
+Firebase's paid Blaze plan, which Cloud Functions requires even without exceeding the free usage
+tier).
 
-Pode apagar essa pasta com segurança. Ficou aqui só de referência.
+This folder can be safely deleted. It's kept here only for reference.

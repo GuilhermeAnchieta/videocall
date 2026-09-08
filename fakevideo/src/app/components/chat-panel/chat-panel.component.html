@@ -1,7 +1,7 @@
 <aside class="panel">
   <header class="panel-header">
     <h2>Chat</h2>
-    <button type="button" class="icon-btn" (click)="close.emit()" title="Fechar">
+    <button type="button" class="icon-btn" (click)="close.emit()" title="Close">
       <span class="material-symbols-outlined">close</span>
     </button>
   </header>
@@ -15,20 +15,20 @@
         <span class="bubble">{{ m.text }}</span>
       </div>
     } @empty {
-      <p class="empty-hint">Nenhuma mensagem ainda. Diga oi!</p>
+      <p class="empty-hint">No messages yet. Say hi!</p>
     }
   </div>
 
   <form class="composer" (submit)="$event.preventDefault(); submit()">
     <input
       type="text"
-      placeholder="Enviar mensagem para todos"
+      placeholder="Message everyone"
       [ngModel]="draft()"
       (ngModelChange)="draft.set($event)"
       name="chatDraft"
       autocomplete="off"
     />
-    <button type="submit" class="send-btn" title="Enviar">
+    <button type="submit" class="send-btn" title="Send">
       <span class="material-symbols-outlined">send</span>
     </button>
   </form>

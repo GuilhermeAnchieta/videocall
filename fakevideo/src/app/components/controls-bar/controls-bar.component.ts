@@ -80,8 +80,8 @@ export class ControlsBarComponent {
   @HostListener('document:pointerdown', ['$event'])
   onDocumentPointerDown(event: PointerEvent): void {
     const target = event.target as Node;
-    // Cada popover fecha ao clicar em QUALQUER lugar fora do seu próprio par
-    // botão+seta — inclusive em outro botão da barra, não só fora do componente inteiro.
+    // Each popover closes when clicking ANYWHERE outside its own button+arrow
+    // pair — including on another button in the bar, not just outside the whole component.
     if (this.confirmingLeave() && !this.leaveWrap()?.nativeElement.contains(target)) {
       this.cancelLeave();
     }

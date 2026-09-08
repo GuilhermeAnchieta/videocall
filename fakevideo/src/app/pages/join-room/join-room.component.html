@@ -20,7 +20,7 @@
           class="control-btn"
           [class.off]="!previewMicEnabled()"
           (click)="toggleMic()"
-          [title]="previewMicEnabled() ? 'Desligar microfone' : 'Ligar microfone'"
+          [title]="previewMicEnabled() ? 'Turn off microphone' : 'Turn on microphone'"
         >
           <span class="material-symbols-outlined">{{ previewMicEnabled() ? 'mic' : 'mic_off' }}</span>
         </button>
@@ -29,7 +29,7 @@
           class="control-btn"
           [class.off]="!previewCameraEnabled()"
           (click)="toggleCamera()"
-          [title]="previewCameraEnabled() ? 'Desligar câmera' : 'Ligar câmera'"
+          [title]="previewCameraEnabled() ? 'Turn off camera' : 'Turn on camera'"
         >
           <span class="material-symbols-outlined">{{ previewCameraEnabled() ? 'videocam' : 'videocam_off' }}</span>
         </button>
@@ -37,20 +37,20 @@
     </div>
 
     <form class="join-form" (submit)="$event.preventDefault(); join()">
-      <h1>Pronto para entrar?</h1>
+      <h1>Ready to join?</h1>
 
       @if (previewError(); as err) {
         <p class="hint error">{{ err }}</p>
       }
 
       <label class="field">
-        <span>Seu nome</span>
+        <span>Your name</span>
         <input
           type="text"
           [ngModel]="displayName()"
           (ngModelChange)="displayName.set($event)"
           name="displayName"
-          placeholder="Como devemos te chamar?"
+          placeholder="What should we call you?"
           autocomplete="off"
           required
         />
@@ -58,10 +58,10 @@
 
       @switch (mode()) {
         @case ('choose') {
-          <p class="hint">Você vai entrar numa sala já criada ou é você quem vai chamar as pessoas?</p>
+          <p class="hint">Are you joining a room someone else created, or are you the one inviting people?</p>
 
           <button type="button" class="join-btn" [disabled]="!displayName().trim()" (click)="chooseJoin()">
-            Entrar com um código
+            Join with a code
           </button>
 
           <button
@@ -70,12 +70,12 @@
             [disabled]="!displayName().trim() || creatingRoom()"
             (click)="hostRoom()"
           >
-            {{ creatingRoom() ? 'Criando sala…' : 'Sou o anfitrião — iniciar chamada' }}
+            {{ creatingRoom() ? 'Creating room…' : "I'm the host — start call" }}
           </button>
         }
         @case ('join') {
           <label class="field">
-            <span>Código da sala</span>
+            <span>Room code</span>
             <input
               type="text"
               [ngModel]="roomCode()"
@@ -88,15 +88,15 @@
           </label>
 
           <button type="button" class="link-btn" (click)="backToChoice()">
-            Voltar
+            Back
           </button>
 
           <button type="submit" class="join-btn" [disabled]="!displayName().trim() || !roomCode().trim() || joining()">
-            Participar agora
+            Join now
           </button>
         }
         @case ('host') {
-          <p class="hint">Criando sua sala…</p>
+          <p class="hint">Creating your room…</p>
         }
       }
     </form>

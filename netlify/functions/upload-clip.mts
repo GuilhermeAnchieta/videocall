@@ -3,9 +3,9 @@ import { getStore } from '@netlify/blobs';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// Guarda os bytes do vídeo no Netlify Blobs (free, sem cartão) e só os metadados no
-// Firestore — assim não dependemos do Firebase Storage, que hoje exige o plano Blaze
-// mesmo pra uso gratuito (mudança da Google de set/2024).
+// Stores the video bytes in Netlify Blobs (free, no card) and only the metadata in
+// Firestore — this way we don't depend on Firebase Storage, which now requires the Blaze
+// plan even for free-tier usage (Google's change from Sept/2024).
 function ensureAdmin(): void {
   if (getApps().length) return;
   if (process.env.FIRESTORE_EMULATOR_HOST) {
@@ -33,7 +33,7 @@ export default async (req: Request, _context: Context): Promise<Response> => {
     const ownerId = (form.get('ownerId')?.toString() ?? '').trim();
 
     if (!(file instanceof File) || !name || !ownerId) {
-      return new Response(JSON.stringify({ error: 'file, name e ownerId são obrigatórios' }), {
+      return new Response(JSON.stringify({ error: 'file, name and ownerId are required' }), {
         status: 400,
         headers: { 'content-type': 'application/json' }
       });
@@ -57,7 +57,7 @@ export default async (req: Request, _context: Context): Promise<Response> => {
     });
   } catch (err) {
     console.error('upload-clip failed', err);
-    return new Response(JSON.stringify({ error: 'falha ao enviar o clipe' }), {
+    return new Response(JSON.stringify({ error: 'failed to upload clip' }), {
       status: 500,
       headers: { 'content-type': 'application/json' }
     });

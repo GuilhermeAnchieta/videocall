@@ -29,10 +29,10 @@ export class JoinRoomComponent implements OnInit, OnDestroy {
   readonly joining = signal(false);
 
   /**
-   * Quem cria a sala vira o dono (ownerUid gravado no Firestore) e ganha o botão de
-   * clipes/participantes falsos; quem entra com um código é sempre um participante comum.
-   * Separar as duas ações em telas distintas evita que alguém acabe criando uma sala nova
-   * sem querer (e virando "dono" por acidente) ao tentar só entrar com um código.
+   * Whoever creates the room becomes the owner (ownerUid stored in Firestore) and gets
+   * the clips/fake participants button; whoever joins with a code is always a regular
+   * participant. Separating the two actions into distinct screens avoids someone accidentally
+   * creating a new room (and becoming "owner" by accident) while trying to just join with a code.
    */
   readonly mode = signal<JoinMode>('choose');
 
@@ -85,7 +85,7 @@ export class JoinRoomComponent implements OnInit, OnDestroy {
       await this.enterCall(code, name, true);
     } catch {
       this.previewError.set(
-        'Não foi possível criar a sala. Verifique se o netlify dev (ou o site publicado) e os emuladores estão rodando.'
+        'Could not create the room. Make sure netlify dev (or the published site) and the emulators are running.'
       );
       this.creatingRoom.set(false);
       this.mode.set('choose');
@@ -130,7 +130,7 @@ export class JoinRoomComponent implements OnInit, OnDestroy {
         el.srcObject = stream;
       }
     } catch {
-      this.previewError.set('Não foi possível acessar câmera/microfone. Você ainda pode entrar na sala.');
+      this.previewError.set('Could not access camera/microphone. You can still join the room.');
     }
   }
 

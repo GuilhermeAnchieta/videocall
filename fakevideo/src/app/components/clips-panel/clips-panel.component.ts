@@ -38,7 +38,7 @@ export class ClipsPanelComponent implements OnInit {
       this.clips.set(clips);
       clips.slice(0, 3).forEach((clip) => this.mediaSource.preloadClip(clip));
     } catch {
-      this.errorMessage.set('Não foi possível carregar a biblioteca de clipes.');
+      this.errorMessage.set('Could not load the clip library.');
     } finally {
       this.loading.set(false);
     }
@@ -56,7 +56,7 @@ export class ClipsPanelComponent implements OnInit {
     try {
       await this.mediaSource.switchToClip(clip);
     } catch {
-      this.errorMessage.set(`Não foi possível reproduzir "${clip.name}".`);
+      this.errorMessage.set(`Could not play "${clip.name}".`);
     }
   }
 
@@ -68,7 +68,7 @@ export class ClipsPanelComponent implements OnInit {
       await this.fakeParticipants.add(this.roomCode(), clip, name);
       this.newFakeName.set('');
     } catch {
-      this.errorMessage.set(`Não foi possível adicionar "${name}" como participante falso.`);
+      this.errorMessage.set(`Could not add "${name}" as a fake participant.`);
     } finally {
       this.addingFakeClipId.set(null);
     }
@@ -99,7 +99,7 @@ export class ClipsPanelComponent implements OnInit {
       const clip = await this.clipLibrary.uploadPersonalClip(file, name);
       this.clips.update((list) => [...list, clip]);
     } catch {
-      this.errorMessage.set('Falha ao enviar o clipe. Tente novamente.');
+      this.errorMessage.set('Failed to upload the clip. Please try again.');
     } finally {
       this.uploading.set(false);
     }

@@ -1,7 +1,7 @@
 <aside class="panel">
   <header class="panel-header">
-    <h2>Clipes</h2>
-    <button type="button" class="icon-btn" (click)="close.emit()" title="Fechar">
+    <h2>Clips</h2>
+    <button type="button" class="icon-btn" (click)="close.emit()" title="Close">
       <span class="material-symbols-outlined">close</span>
     </button>
   </header>
@@ -12,19 +12,19 @@
     }
 
     <section class="section">
-      <h3>Meu vídeo</h3>
-      <p class="hint">Troca a sua própria câmera por um clipe — os outros veem como se fosse sua webcam.</p>
+      <h3>My video</h3>
+      <p class="hint">Swap your own camera for a clip — others see it as if it were your webcam.</p>
 
       <button type="button" class="camera-option" [class.active]="mode() === 'camera'" (click)="chooseCamera()">
         <span class="material-symbols-outlined">videocam</span>
-        <span>Câmera real</span>
+        <span>Real camera</span>
         @if (mode() === 'camera') {
           <span class="material-symbols-outlined check">check_circle</span>
         }
       </button>
 
       @if (loading()) {
-        <p class="hint">Carregando clipes…</p>
+        <p class="hint">Loading clips…</p>
       } @else if (clips().length > 0) {
         <div class="clip-grid">
           @for (clip of clips(); track clip.id) {
@@ -55,8 +55,8 @@
     </section>
 
     <section class="section">
-      <h3>Participantes falsos</h3>
-      <p class="hint">Cada clipe entra como uma pessoa nova na chamada, com nome próprio.</p>
+      <h3>Fake participants</h3>
+      <p class="hint">Each clip joins as a new person in the call, with its own name.</p>
 
       @if (fakeList().length > 0) {
         <ul class="fake-list">
@@ -67,7 +67,7 @@
                 <button
                   type="button"
                   class="icon-btn small"
-                  [title]="fake.micEnabled ? 'Mutar' : 'Desmutar'"
+                  [title]="fake.micEnabled ? 'Mute' : 'Unmute'"
                   (click)="toggleFakeMic(fake.fakeId!, !fake.micEnabled)"
                 >
                   <span class="material-symbols-outlined">{{ fake.micEnabled ? 'mic' : 'mic_off' }}</span>
@@ -75,7 +75,7 @@
                 <button
                   type="button"
                   class="icon-btn small"
-                  [title]="fake.cameraEnabled ? 'Desligar câmera' : 'Ligar câmera'"
+                  [title]="fake.cameraEnabled ? 'Turn off camera' : 'Turn on camera'"
                   (click)="toggleFakeCamera(fake.fakeId!, !fake.cameraEnabled)"
                 >
                   <span class="material-symbols-outlined">{{
@@ -85,7 +85,7 @@
                 <button
                   type="button"
                   class="icon-btn small remove"
-                  title="Remover"
+                  title="Remove"
                   (click)="removeFake(fake.fakeId!)"
                 >
                   <span class="material-symbols-outlined">person_remove</span>
@@ -97,13 +97,13 @@
       }
 
       <label class="field">
-        <span>Nome do novo participante (opcional)</span>
+        <span>New participant name (optional)</span>
         <input
           type="text"
           [ngModel]="newFakeName()"
           (ngModelChange)="newFakeName.set($event)"
           name="fakeName"
-          placeholder="Ex: Vovó Maria"
+          placeholder="e.g. Grandma Maria"
           autocomplete="off"
         />
       </label>
@@ -132,7 +132,7 @@
           }
         </div>
       } @else if (!loading()) {
-        <p class="hint">Nenhum clipe ainda. Envie um vídeo abaixo para começar.</p>
+        <p class="hint">No clips yet. Upload a video below to get started.</p>
       }
 
       <label class="upload-btn" [class.disabled]="uploading()">
@@ -141,7 +141,7 @@
         } @else {
           <span class="material-symbols-outlined">add</span>
         }
-        Enviar clipe
+        Upload clip
         <input type="file" accept="video/*" hidden [disabled]="uploading()" (change)="onFileSelected($event)" />
       </label>
     </section>

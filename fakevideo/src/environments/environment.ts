@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
   useEmulators: false,
-  // '' = mesma origem (o site publicado na Netlify serve o Angular + as functions no mesmo domínio).
+  // '' = same origin (the site published on Netlify serves the Angular app + the functions on the same domain).
   apiBase: '',
   firebase: {
     apiKey: 'AIzaSyCiGHdQ0rvba4eNFzqbcb_6jp8NRaBi-9Y',
