@@ -21,6 +21,7 @@ export class AudioOutputService {
   private context?: AudioContext;
   private outputDeviceId?: string;
   private readonly liveElements = new Set<SinkCapableElement>();
+  private unlockListenersAttached = false;
 
   readonly sinkIdSupported = SINK_ID_SUPPORTED;
   readonly outputDevice = signal<string | undefined>(undefined);
@@ -32,7 +33,25 @@ export class AudioOutputService {
     if (this.context.state === 'suspended') {
       void this.context.resume();
     }
+    this.ensureUnlockListeners();
     return this.context;
+  }
+
+  /**
+   * The AudioContext (and the <audio> elements fed by it) are created asynchronously once a
+   * remote track arrives, not synchronously inside a click handler, so browsers routinely start
+   * them suspended/blocked. Retry on the next real user gesture instead of staying silent forever.
+   */
+  private ensureUnlockListeners(): void {
+    if (this.unlockListenersAttached) return;
+    this.unlockListenersAttached = true;
+    const unlock = () => {
+      void this.context?.resume();
+      this.liveElements.forEach((el) => void el.play().catch(() => {}));
+    };
+    (['pointerdown', 'touchend', 'keydown'] as const).forEach((evt) =>
+      document.addEventListener(evt, unlock, { passive: true })
+    );
   }
 
   /** Connects a remote participant's audio to a gentle limiter; returns how to disconnect. */
@@ -62,9 +81,16 @@ export class AudioOutputService {
     const audioEl: SinkCapableElement = document.createElement('audio');
     audioEl.autoplay = true;
     audioEl.srcObject = destinationNode.stream;
+    // Keep it in the DOM (hidden — audio elements without `controls` render as nothing anyway):
+    // some browsers (notably Safari/iOS) are unreliable about continuing to play detached media
+    // elements, and being attached also makes it eligible for the page's autoplay allowance.
+    document.body.appendChild(audioEl);
     if (this.outputDeviceId && this.sinkIdSupported) {
       void audioEl.setSinkId?.(this.outputDeviceId).catch(() => {});
     }
+    // autoplay alone can silently no-op if the browser blocks it; play() explicitly so a
+    // rejection is at least retryable from ensureUnlockListeners() on the next user gesture.
+    void audioEl.play().catch(() => {});
     this.liveElements.add(audioEl);
 
     return {
@@ -72,6 +98,7 @@ export class AudioOutputService {
         this.liveElements.delete(audioEl);
         audioEl.pause();
         audioEl.srcObject = null;
+        audioEl.remove();
         source.disconnect();
         compressor.disconnect();
         highShelf.disconnect();
