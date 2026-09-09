@@ -26,6 +26,15 @@ export class AudioOutputService {
   readonly sinkIdSupported = SINK_ID_SUPPORTED;
   readonly outputDevice = signal<string | undefined>(undefined);
 
+  constructor() {
+    // Attach the unlock listeners immediately instead of waiting for the first remote track:
+    // the host typically creates the room and sits idle until someone joins, so by the time a
+    // remote track arrives there may be no user gesture left to resume playback on. Listening
+    // from the start means whatever the host clicked/tapped earlier (e.g. "Create room") already
+    // counts.
+    this.ensureUnlockListeners();
+  }
+
   private getContext(): AudioContext {
     if (!this.context) {
       this.context = new AudioContext();
@@ -46,7 +55,10 @@ export class AudioOutputService {
     if (this.unlockListenersAttached) return;
     this.unlockListenersAttached = true;
     const unlock = () => {
-      void this.context?.resume();
+      // Creates the context eagerly (not just resumes an existing one) so that a gesture made
+      // before any remote track has arrived — e.g. clicking "Create room" — still leaves a
+      // running AudioContext ready for when playback is actually needed.
+      void this.getContext().resume();
       this.liveElements.forEach((el) => void el.play().catch(() => {}));
     };
     (['pointerdown', 'touchend', 'keydown'] as const).forEach((evt) =>
