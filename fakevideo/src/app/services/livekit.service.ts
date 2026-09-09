@@ -1,6 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { LocalAudioTrack, LocalParticipant, LocalTrack, Participant, Room, RoomEvent, Track, VideoPresets } from 'livekit-client';
-import { isKrispNoiseFilterSupported, KrispNoiseFilter, KrispNoiseFilterProcessor } from '@livekit/krisp-noise-filter';
+import { LocalParticipant, LocalTrack, Participant, Room, RoomEvent, Track, VideoPresets } from 'livekit-client';
 import { ChatMessage, ParticipantView } from '../models/room-state';
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected';
@@ -8,7 +7,6 @@ export type ConnectionState = 'disconnected' | 'connecting' | 'connected';
 @Injectable({ providedIn: 'root' })
 export class LivekitService {
   private room: Room | null = null;
-  private noiseFilter: KrispNoiseFilterProcessor | null = null;
 
   readonly participants = signal<ParticipantView[]>([]);
   readonly chatMessages = signal<ChatMessage[]>([]);
@@ -48,7 +46,6 @@ export class LivekitService {
     await room.connect(url, token);
     await room.localParticipant.setMicrophoneEnabled(true);
     await room.localParticipant.setCameraEnabled(true);
-    await this.applyNoiseFilter();
 
     this.connectionState.set('connected');
     this.sync();
@@ -64,28 +61,7 @@ export class LivekitService {
 
   async setMicEnabled(enabled: boolean): Promise<void> {
     await this.room?.localParticipant.setMicrophoneEnabled(enabled);
-    if (enabled) await this.applyNoiseFilter();
     this.sync();
-  }
-
-  /**
-   * Attaches LiveKit's Krisp ML noise filter to the mic track (same voice-isolation
-   * approach as Google Meet/Discord), on top of the native browser noise suppression
-   * already set in audioCaptureDefaults. Falls back silently on unsupported browsers.
-   */
-  private async applyNoiseFilter(): Promise<void> {
-    const audioTrack = this.getLocalAudioTrack() as LocalAudioTrack | undefined;
-    if (!audioTrack || audioTrack.getProcessor()) return;
-    if (!isKrispNoiseFilterSupported()) return;
-
-    if (!this.noiseFilter) {
-      this.noiseFilter = KrispNoiseFilter({ quality: 'high' });
-    }
-    try {
-      await audioTrack.setProcessor(this.noiseFilter);
-    } catch (err) {
-      console.warn('Failed to enable Krisp noise filter, falling back to native suppression', err);
-    }
   }
 
   async setCameraEnabled(enabled: boolean): Promise<void> {
