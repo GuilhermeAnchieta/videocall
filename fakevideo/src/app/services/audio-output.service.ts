@@ -25,6 +25,10 @@ export class AudioOutputService {
 
   readonly sinkIdSupported = SINK_ID_SUPPORTED;
   readonly outputDevice = signal<string | undefined>(undefined);
+  /** True when a remote track's playback was rejected by the browser's autoplay policy and is
+   *  waiting on a user gesture to retry. The UI should surface a visible "tap to enable audio"
+   *  prompt instead of relying on the user to stumble into an unrelated click/tap. */
+  readonly playbackBlocked = signal(false);
 
   constructor() {
     // Attach the unlock listeners immediately instead of waiting for the first remote track:
@@ -54,17 +58,26 @@ export class AudioOutputService {
   private ensureUnlockListeners(): void {
     if (this.unlockListenersAttached) return;
     this.unlockListenersAttached = true;
-    const unlock = () => {
-      // Creates the context eagerly (not just resumes an existing one) so that a gesture made
-      // before any remote track has arrived — e.g. clicking "Create room" — still leaves a
-      // running AudioContext ready for when playback is actually needed.
-      void this.getContext().resume();
-      this.liveElements.forEach((el) => void el.play().catch(() => {}));
-    };
     (['pointerdown', 'touchend', 'keydown'] as const).forEach((evt) =>
-      document.addEventListener(evt, unlock, { passive: true })
+      document.addEventListener(evt, this.retryPlayback, { passive: true })
     );
   }
+
+  /**
+   * Re-resumes the AudioContext and re-plays every remote <audio> element. Runs automatically on
+   * the next click/tap/key press (see ensureUnlockListeners), but is also exposed so a visible
+   * "tap to enable audio" prompt can call it directly from its own click handler instead of
+   * relying on the user to stumble into an unrelated gesture first.
+   */
+  readonly retryPlayback = (): void => {
+    // Creates the context eagerly (not just resuming an existing one) so that a gesture made
+    // before any remote track has arrived — e.g. clicking "Create room" — still leaves a
+    // running AudioContext ready for when playback is actually needed.
+    void this.getContext().resume();
+    Promise.all([...this.liveElements].map((el) => el.play().catch(() => false))).then((results) => {
+      if (results.every((r) => r !== false)) this.playbackBlocked.set(false);
+    });
+  };
 
   /** Connects a remote participant's audio to a gentle limiter; returns how to disconnect. */
   connect(track: Track): { disconnect(): void } {
@@ -108,6 +121,7 @@ export class AudioOutputService {
           'will retry on next user interaction (click/tap/key press).',
         err
       );
+      this.playbackBlocked.set(true);
     });
     this.liveElements.add(audioEl);
 

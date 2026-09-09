@@ -9,6 +9,7 @@ import { LivekitService } from '../../services/livekit.service';
 import { MediaSourceService } from '../../services/media-source.service';
 import { FakeParticipantsService } from '../../services/fake-participants.service';
 import { RoomService } from '../../services/room.service';
+import { AudioOutputService } from '../../services/audio-output.service';
 import { ParticipantView } from '../../models/room-state';
 
 @Component({
@@ -31,8 +32,10 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   private readonly livekit = inject(LivekitService);
   private readonly mediaSource = inject(MediaSourceService);
   private readonly fakeParticipants = inject(FakeParticipantsService);
+  private readonly audioOutput = inject(AudioOutputService);
 
   readonly connectionState = this.livekit.connectionState;
+  readonly audioPlaybackBlocked = this.audioOutput.playbackBlocked;
   readonly chatMessages = this.livekit.chatMessages;
   readonly roomCode = signal('');
   readonly errorMessage = signal<string | null>(null);
@@ -169,6 +172,10 @@ export class CallRoomComponent implements OnInit, OnDestroy {
 
   async toggleCamera(): Promise<void> {
     await this.livekit.setCameraEnabled(!this.cameraEnabled());
+  }
+
+  enableAudio(): void {
+    this.audioOutput.retryPlayback();
   }
 
   async leaveCall(): Promise<void> {
