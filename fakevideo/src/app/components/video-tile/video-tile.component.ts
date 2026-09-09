@@ -13,6 +13,7 @@ export class VideoTileComponent {
 
   readonly participant = input.required<ParticipantView>();
   readonly isOwner = input<boolean>(false);
+  readonly frozen = input<boolean>(false);
 
   readonly toggleFakeMic = output<void>();
   readonly toggleFakeCamera = output<void>();

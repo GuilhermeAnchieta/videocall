@@ -90,7 +90,13 @@ export class AudioOutputService {
     }
     // autoplay alone can silently no-op if the browser blocks it; play() explicitly so a
     // rejection is at least retryable from ensureUnlockListeners() on the next user gesture.
-    void audioEl.play().catch(() => {});
+    void audioEl.play().catch((err) => {
+      console.warn(
+        `[AudioOutputService] playback blocked for a remote track (context state: ${ctx.state}); ` +
+          'will retry on next user interaction (click/tap/key press).',
+        err
+      );
+    });
     this.liveElements.add(audioEl);
 
     return {

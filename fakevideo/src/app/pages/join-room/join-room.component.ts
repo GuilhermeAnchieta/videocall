@@ -127,6 +127,7 @@ export class JoinRoomComponent implements OnInit, OnDestroy {
       this.previewStream = stream;
       const el = this.previewVideo()?.nativeElement;
       if (el) {
+        el.muted = true;
         el.srcObject = stream;
       }
     } catch {

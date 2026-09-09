@@ -17,6 +17,56 @@
   &.speaking {
     box-shadow: 0 0 0 3px #8ab4f8, 0 1px 6px rgba(0, 0, 0, 0.5);
   }
+
+  &.frozen {
+    animation: frozen-glitch 550ms steps(2, end) infinite;
+
+    .tile-video {
+      filter: grayscale(0.5) contrast(1.2);
+    }
+  }
+}
+
+.frozen-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #f28b82;
+  font-size: 12px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+
+  .material-symbols-outlined {
+    font-size: 28px;
+  }
+}
+
+@keyframes frozen-glitch {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+  20% {
+    transform: translate(-2px, 1px);
+    filter: hue-rotate(15deg);
+  }
+  40% {
+    transform: translate(2px, -1px);
+    filter: hue-rotate(-10deg);
+  }
+  60% {
+    transform: translate(-1px, 0);
+  }
+  80% {
+    transform: translate(1px, 1px);
+    filter: hue-rotate(8deg);
+  }
 }
 
 .tile-video {

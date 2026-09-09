@@ -74,6 +74,11 @@
       background: #8f1c12;
     }
   }
+
+  &.armed:not(.leave) {
+    background: #f2b400;
+    color: #202124;
+  }
 }
 
 .count-badge {
@@ -104,7 +109,8 @@
   box-shadow: 0 0 0 2px #202124;
 }
 
-.leave-wrap {
+.leave-wrap,
+.teleport-wrap {
   position: relative;
   display: flex;
 }
@@ -209,7 +215,7 @@
   }
 }
 
-.leave-confirm {
+.confirm-popover {
   position: absolute;
   bottom: calc(100% + 12px);
   left: 50%;

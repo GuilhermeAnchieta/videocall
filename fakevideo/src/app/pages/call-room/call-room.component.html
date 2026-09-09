@@ -36,11 +36,19 @@
             <app-video-tile
               [participant]="participant"
               [isOwner]="isOwner()"
+              [frozen]="!!participant.fakeId && frozenFakeIds().has(participant.fakeId)"
               (toggleFakeMic)="toggleFakeMic(participant.fakeId!, !participant.micEnabled)"
               (toggleFakeCamera)="toggleFakeCamera(participant.fakeId!, !participant.cameraEnabled)"
               (removeFake)="removeFake(participant.fakeId!)"
             />
           }
+        </div>
+      }
+
+      @if (teleportActive()) {
+        <div class="teleport-overlay">
+          <div class="teleport-flash"></div>
+          <div class="teleport-scanlines"></div>
         </div>
       }
     </div>
@@ -74,5 +82,6 @@
     (toggleClipsPanel)="toggleClipsPanel()"
     (toggleParticipants)="toggleParticipantsPanel()"
     (toggleChat)="toggleChatPanel()"
+    (triggerTeleport)="triggerTeleport()"
   />
 </div>

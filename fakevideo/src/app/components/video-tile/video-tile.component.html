@@ -1,9 +1,16 @@
-<div class="tile" [class.speaking]="participant().isSpeaking">
+<div class="tile" [class.speaking]="participant().isSpeaking" [class.frozen]="frozen()">
   <video #videoEl class="tile-video" [class.hidden]="!participant().cameraEnabled" autoplay playsinline muted></video>
 
   @if (!participant().cameraEnabled) {
     <div class="avatar">
       <span class="avatar-circle">{{ initials() }}</span>
+    </div>
+  }
+
+  @if (frozen()) {
+    <div class="frozen-overlay">
+      <span class="material-symbols-outlined">signal_disconnected</span>
+      <span>Connection lost…</span>
     </div>
   }
 

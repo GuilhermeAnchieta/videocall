@@ -197,3 +197,69 @@ app-video-tile {
     gap: 10px;
   }
 }
+
+.teleport-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.teleport-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, #c9e2ff 0%, #6ea8fe 30%, rgba(110, 168, 254, 0) 70%);
+  animation: teleport-flash 1400ms ease-out;
+}
+
+.teleport-scanlines {
+  position: absolute;
+  inset: -10%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(180, 220, 255, 0.35) 0px,
+    rgba(180, 220, 255, 0.35) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  mix-blend-mode: screen;
+  animation: teleport-scan 1400ms ease-in-out;
+}
+
+@keyframes teleport-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  40% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+@keyframes teleport-scan {
+  0% {
+    opacity: 0;
+    transform: translateY(-6%);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.5;
+    transform: translateY(4%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10%);
+  }
+}

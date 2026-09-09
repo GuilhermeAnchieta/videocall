@@ -94,6 +94,27 @@
     >
       <span class="material-symbols-outlined">movie</span>
     </button>
+
+    <div class="teleport-wrap" #teleportWrap>
+      @if (confirmingTeleport()) {
+        <div class="confirm-popover" role="dialog" aria-label="Confirm teleport">
+          <span>Teleport all clips out of the call?</span>
+          <div class="leave-confirm-actions">
+            <button type="button" class="cancel-btn" (click)="cancelTeleport()">Cancel</button>
+            <button type="button" class="confirm-btn" (click)="confirmTeleport()">Teleport</button>
+          </div>
+        </div>
+      }
+      <button
+        type="button"
+        class="control-btn"
+        [class.armed]="confirmingTeleport()"
+        title="Teleport (makes every clip freeze and drop from the call)"
+        (click)="requestTeleport()"
+      >
+        <span class="material-symbols-outlined">bolt</span>
+      </button>
+    </div>
   }
 
   <button
@@ -124,7 +145,7 @@
 
   <div class="leave-wrap" #leaveWrap>
     @if (confirmingLeave()) {
-      <div class="leave-confirm" role="dialog" aria-label="Confirm leaving the call">
+      <div class="confirm-popover" role="dialog" aria-label="Confirm leaving the call">
         <span>Leave the call?</span>
         <div class="leave-confirm-actions">
           <button type="button" class="cancel-btn" (click)="cancelLeave()">Cancel</button>

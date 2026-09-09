@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { VideoTileComponent } from '../../components/video-tile/video-tile.component';
 import { ControlsBarComponent } from '../../components/controls-bar/controls-bar.component';
@@ -41,6 +41,25 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   readonly participantsPanelOpen = signal(false);
   readonly chatPanelOpen = signal(false);
   readonly clipsPanelOpen = signal(false);
+
+  readonly teleportActive = signal(false);
+  readonly frozenFakeIds = signal<ReadonlySet<string>>(new Set());
+  private static readonly TELEPORT_EFFECT_DURATION = 1400;
+  private static readonly TELEPORT_DROP_DELAY = 900;
+  private teleportEffectTimer?: ReturnType<typeof setTimeout>;
+  private teleportDropTimer?: ReturnType<typeof setTimeout>;
+
+  constructor() {
+    effect((onCleanup) => {
+      const pulse = this.livekit.teleportPulse();
+      if (pulse === 0) return;
+      this.playTeleportEffect();
+      onCleanup(() => {
+        clearTimeout(this.teleportEffectTimer);
+        clearTimeout(this.teleportDropTimer);
+      });
+    });
+  }
 
   readonly displayParticipants = computed<ParticipantView[]>(() => {
     const usingClip = this.mediaSource.mode() === 'clip';
@@ -126,6 +145,8 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     clearTimeout(this.hideControlsTimer);
     clearTimeout(this.copyResetTimer);
+    clearTimeout(this.teleportEffectTimer);
+    clearTimeout(this.teleportDropTimer);
     this.mediaSource.dispose();
     this.fakeParticipants.dispose();
     void this.livekit.disconnect();
@@ -202,5 +223,36 @@ export class CallRoomComponent implements OnInit, OnDestroy {
 
   async removeFake(fakeId: string): Promise<void> {
     await this.fakeParticipants.remove(fakeId);
+  }
+
+  triggerTeleport(): void {
+    if (!this.isOwner()) return;
+    this.livekit.triggerTeleportEffect();
+  }
+
+  /**
+   * Runs for everyone in the room (triggered locally by the host, or received over the
+   * data channel by everyone else) so the visual effect plays in sync. Only the host's
+   * browser actually owns the fake participants' connections, so only it follows through
+   * with freezing and dropping them.
+   */
+  private playTeleportEffect(): void {
+    this.teleportActive.set(true);
+    clearTimeout(this.teleportEffectTimer);
+    this.teleportEffectTimer = setTimeout(
+      () => this.teleportActive.set(false),
+      CallRoomComponent.TELEPORT_EFFECT_DURATION
+    );
+
+    if (!this.isOwner()) return;
+
+    this.fakeParticipants.freezeAll();
+    this.frozenFakeIds.set(new Set(this.fakeParticipants.participantViews().map((p) => p.fakeId!)));
+
+    clearTimeout(this.teleportDropTimer);
+    this.teleportDropTimer = setTimeout(async () => {
+      await this.fakeParticipants.removeAll();
+      this.frozenFakeIds.set(new Set());
+    }, CallRoomComponent.TELEPORT_EFFECT_DURATION + CallRoomComponent.TELEPORT_DROP_DELAY);
   }
 }

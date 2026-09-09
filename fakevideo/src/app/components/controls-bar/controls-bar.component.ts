@@ -45,6 +45,7 @@ export class ControlsBarComponent {
   readonly toggleClipsPanel = output<void>();
   readonly toggleParticipants = output<void>();
   readonly toggleChat = output<void>();
+  readonly triggerTeleport = output<void>();
 
   readonly confirmingLeave = signal(false);
   private confirmTimer?: ReturnType<typeof setTimeout>;
@@ -66,14 +67,36 @@ export class ControlsBarComponent {
     this.leaveCall.emit();
   }
 
+  readonly confirmingTeleport = signal(false);
+  private teleportConfirmTimer?: ReturnType<typeof setTimeout>;
+
+  requestTeleport(): void {
+    if (this.confirmingTeleport()) return;
+    this.confirmingTeleport.set(true);
+    this.teleportConfirmTimer = setTimeout(() => this.confirmingTeleport.set(false), 4000);
+  }
+
+  cancelTeleport(): void {
+    clearTimeout(this.teleportConfirmTimer);
+    this.confirmingTeleport.set(false);
+  }
+
+  confirmTeleport(): void {
+    clearTimeout(this.teleportConfirmTimer);
+    this.confirmingTeleport.set(false);
+    this.triggerTeleport.emit();
+  }
+
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.cancelLeave();
+    this.cancelTeleport();
     this.micMenuOpen.set(false);
     this.cameraMenuOpen.set(false);
   }
 
   private readonly leaveWrap = viewChild<ElementRef<HTMLElement>>('leaveWrap');
+  private readonly teleportWrap = viewChild<ElementRef<HTMLElement>>('teleportWrap');
   private readonly micWrap = viewChild<ElementRef<HTMLElement>>('micWrap');
   private readonly cameraWrap = viewChild<ElementRef<HTMLElement>>('cameraWrap');
 
@@ -84,6 +107,9 @@ export class ControlsBarComponent {
     // pair — including on another button in the bar, not just outside the whole component.
     if (this.confirmingLeave() && !this.leaveWrap()?.nativeElement.contains(target)) {
       this.cancelLeave();
+    }
+    if (this.confirmingTeleport() && !this.teleportWrap()?.nativeElement.contains(target)) {
+      this.cancelTeleport();
     }
     if (this.micMenuOpen() && !this.micWrap()?.nativeElement.contains(target)) {
       this.micMenuOpen.set(false);

@@ -103,6 +103,15 @@ export class FakeParticipantsService {
     }
   }
 
+  /** Pauses each clip's video element so its frame freezes for every viewer (the underlying track keeps publishing the stalled frame). */
+  freezeAll(): void {
+    this.entries().forEach((entry) => entry.videoEl.pause());
+  }
+
+  async removeAll(): Promise<void> {
+    await Promise.all(this.entries().map((entry) => this.remove(entry.id)));
+  }
+
   async remove(id: string): Promise<void> {
     const entry = this.entries().find((e) => e.id === id);
     if (!entry) return;
