@@ -13,9 +13,11 @@
 [functions]
   node_bundler = "esbuild"
 
-# SPA fallback for the Angular Router. Requests that match a function with its own "path"
-# (/api/create-room, /api/generate-token) are resolved before this redirect, so they don't collide.
+# SPA fallback for the Angular Router. Scoped to the app's actual routes (see app.routes.ts)
+# instead of "/*" — a blanket catch-all also matches the Angular dev server's own asset paths
+# (/@fs/..., /@vite/client) in `netlify dev`, which breaks local bootstrap by serving index.html
+# in place of those JS modules.
 [[redirects]]
-  from = "/*"
+  from = "/call/*"
   to = "/index.html"
   status = 200

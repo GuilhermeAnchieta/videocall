@@ -28,3 +28,6 @@ ios/App/App/public/
 
 # Local Netlify folder
 .netlify
+
+# Local HTTPS certs (mkcert) for testing from other devices on the LAN
+.certs/
