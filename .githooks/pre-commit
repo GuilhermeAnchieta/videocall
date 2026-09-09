@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Bumps the patch version in fakevideo/src/app/version.ts on every commit and
+# stages the change so it's included in the commit being made.
+# Enabled once per clone via: git config core.hooksPath .githooks
+set -euo pipefail
+
+VERSION_FILE="fakevideo/src/app/version.ts"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+[ -f "$VERSION_FILE" ] || exit 0
+
+current=$(grep -oE "[0-9]+\.[0-9]+\.[0-9]+" "$VERSION_FILE" | head -1)
+[ -n "$current" ] || exit 0
+
+major=$(echo "$current" | cut -d. -f1)
+minor=$(echo "$current" | cut -d. -f2)
+patch=$(echo "$current" | cut -d. -f3)
+next="$major.$minor.$((patch + 1))"
+
+sed -i '' "s/$current/$next/" "$VERSION_FILE"
+git add "$VERSION_FILE"
+echo "Bumped app version: $current -> $next"

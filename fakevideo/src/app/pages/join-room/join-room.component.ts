@@ -2,6 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } f
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RoomService } from '../../services/room.service';
+import { APP_VERSION } from '../../version';
 
 export type JoinMode = 'choose' | 'join' | 'host';
 
@@ -13,6 +14,8 @@ export type JoinMode = 'choose' | 'join' | 'host';
   styleUrl: './join-room.component.scss'
 })
 export class JoinRoomComponent implements OnInit, OnDestroy {
+  readonly appVersion = APP_VERSION;
+
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly roomService = inject(RoomService);

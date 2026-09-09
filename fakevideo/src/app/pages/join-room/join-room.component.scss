@@ -7,6 +7,7 @@
 }
 
 .join-page {
+  position: relative;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
@@ -16,6 +17,16 @@
   padding-top: calc(32px + env(safe-area-inset-top, 0px));
   padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
   gap: 32px;
+}
+
+.app-version {
+  position: absolute;
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  font-size: 11px;
+  color: #5f6368;
+  user-select: none;
+  pointer-events: none;
 }
 
 @media (max-width: 480px) {
