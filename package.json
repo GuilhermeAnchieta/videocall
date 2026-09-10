@@ -4,8 +4,10 @@
   "description": "Depend\u00eancias usadas pelas Netlify Functions em netlify/functions/ (o app Angular tem seu pr\u00f3prio package.json em fakevideo/).",
   "dependencies": {
     "@netlify/functions": "^2.8.2",
-    "firebase-admin": "^12.7.0",
     "livekit-server-sdk": "^2.9.6",
     "@netlify/blobs": "^8.2.0"
+  },
+  "devDependencies": {
+    "@netlify/edge-functions": "^4.0.0"
   }
 }

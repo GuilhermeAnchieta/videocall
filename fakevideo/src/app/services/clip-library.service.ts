@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import { firestore } from './firebase-app';
 import { getCurrentUserId } from './current-user';
 import { environment } from '../../environments/environment';
@@ -34,11 +34,21 @@ export class ClipLibraryService {
 
     const form = new FormData();
     form.append('file', file);
-    form.append('name', name);
-    form.append('ownerId', uid);
 
     const res = await fetch(`${environment.apiBase}/api/upload-clip`, { method: 'POST', body: form });
     if (!res.ok) throw new Error('Failed to upload clip');
-    return (await res.json()) as ClipInfo;
+    const { id, url } = (await res.json()) as { id: string; url: string };
+
+    // Metadata is written from the client (not by the upload-clip function) because that
+    // function runs as a Netlify Edge Function (Deno) to accept large video bodies, and the
+    // Firebase Admin SDK doesn't run there. firestore.rules allows this write directly.
+    const clip: Omit<ClipInfo, 'id'> = {
+      name: name.slice(0, 80),
+      url,
+      scope: 'personal',
+      ownerId: uid
+    };
+    await setDoc(doc(collection(firestore, CLIPS_COLLECTION), id), clip);
+    return { id, ...clip };
   }
 }

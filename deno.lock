@@ -12,8 +12,8 @@
     "packageJson": {
       "dependencies": [
         "npm:@netlify/blobs@^8.2.0",
+        "npm:@netlify/edge-functions@4",
         "npm:@netlify/functions@^2.8.2",
-        "npm:firebase-admin@^12.7.0",
         "npm:livekit-server-sdk@^2.9.6"
       ]
     }
