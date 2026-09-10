@@ -20,7 +20,12 @@ export class LivekitService {
     return this.room?.localParticipant;
   }
 
-  async connect(url: string, token: string): Promise<void> {
+  async connect(
+    url: string,
+    token: string,
+    options: { micEnabled?: boolean; cameraEnabled?: boolean } = {}
+  ): Promise<void> {
+    const { micEnabled = true, cameraEnabled = true } = options;
     this.connectionState.set('connecting');
     const room = new Room({
       adaptiveStream: true,
@@ -45,12 +50,18 @@ export class LivekitService {
     this.room = room;
     this.bindEvents(room);
 
+    // Joining the room (signaling) is kept separate from acquiring the camera/mic: a
+    // getUserMedia() call that hangs (e.g. camera disabled/blocked at the OS level on some
+    // browsers) must not leave the "joining" screen stuck forever once the room itself connected.
     await room.connect(url, token);
-    await room.localParticipant.setMicrophoneEnabled(true);
-    await room.localParticipant.setCameraEnabled(true);
-    await this.applyNoiseFilter();
-
     this.connectionState.set('connected');
+    this.sync();
+
+    await Promise.allSettled([
+      micEnabled ? room.localParticipant.setMicrophoneEnabled(true) : undefined,
+      cameraEnabled ? room.localParticipant.setCameraEnabled(true) : undefined
+    ]);
+    if (micEnabled) await this.applyNoiseFilter();
     this.sync();
   }
 

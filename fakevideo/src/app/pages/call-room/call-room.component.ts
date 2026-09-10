@@ -131,9 +131,12 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     // whoever joins with a code doesn't have that param and never becomes owner.
     this.isOwner.set(this.route.snapshot.queryParamMap.get('host') === '1');
 
+    const micEnabled = this.route.snapshot.queryParamMap.get('mic') !== '0';
+    const cameraEnabled = this.route.snapshot.queryParamMap.get('camera') !== '0';
+
     try {
       const { token, livekitUrl } = await this.roomService.getAccessToken(code, name);
-      await this.livekit.connect(livekitUrl, token);
+      await this.livekit.connect(livekitUrl, token, { micEnabled, cameraEnabled });
       this.scheduleControlsHide();
     } catch {
       this.errorMessage.set(
