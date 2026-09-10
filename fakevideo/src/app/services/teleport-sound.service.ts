@@ -7,8 +7,8 @@ import { Injectable } from '@angular/core';
  *
  * Scheduling below is relative to `ctx.currentTime` and mirrors the phase boundaries in
  * call-room.component.ts (TELEPORT_PHASE_*): the suction ramps through the shake + vortex
- * phases (0 - 1.6s) and the impact burst lands on the flash (~1.6s), decaying into silence
- * by the start of the blackout window (~1.9-2.0s). Keep both files' numbers in sync when
+ * phases (0 - 4.5s) and the impact burst lands on the flash (~4.5s), decaying into silence
+ * before the blackout window starts (~5.1-5.2s). Keep both files' numbers in sync when
  * tuning the effect.
  */
 @Injectable({ providedIn: 'root' })
@@ -39,72 +39,72 @@ export class TeleportSoundService {
 
   private playSuction(ctx: AudioContext, now: number): void {
     const noise = ctx.createBufferSource();
-    noise.buffer = this.whiteNoiseBuffer(ctx, 1.9);
+    noise.buffer = this.whiteNoiseBuffer(ctx, 5.2);
 
     const bandpass = ctx.createBiquadFilter();
     bandpass.type = 'bandpass';
     bandpass.Q.value = 0.7;
     bandpass.frequency.setValueAtTime(220, now);
-    bandpass.frequency.exponentialRampToValueAtTime(3200, now + 1.6);
+    bandpass.frequency.exponentialRampToValueAtTime(3200, now + 4.5);
 
     const noiseGain = ctx.createGain();
     noiseGain.gain.setValueAtTime(0.0001, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.05, now + 0.5);
-    noiseGain.gain.exponentialRampToValueAtTime(0.55, now + 1.55);
-    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.9);
+    noiseGain.gain.exponentialRampToValueAtTime(0.05, now + 1.2);
+    noiseGain.gain.exponentialRampToValueAtTime(0.55, now + 4.3);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 5.2);
 
     const sweep = ctx.createOscillator();
     sweep.type = 'sawtooth';
     sweep.frequency.setValueAtTime(60, now);
-    sweep.frequency.exponentialRampToValueAtTime(520, now + 1.6);
+    sweep.frequency.exponentialRampToValueAtTime(520, now + 4.5);
 
     const sweepGain = ctx.createGain();
     sweepGain.gain.setValueAtTime(0.0001, now);
-    sweepGain.gain.exponentialRampToValueAtTime(0.12, now + 1.55);
-    sweepGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.9);
+    sweepGain.gain.exponentialRampToValueAtTime(0.12, now + 4.3);
+    sweepGain.gain.exponentialRampToValueAtTime(0.0001, now + 5.2);
 
     noise.connect(bandpass).connect(noiseGain).connect(ctx.destination);
     sweep.connect(sweepGain).connect(ctx.destination);
 
     noise.start(now);
-    noise.stop(now + 1.9);
+    noise.stop(now + 5.2);
     sweep.start(now);
-    sweep.stop(now + 1.9);
+    sweep.stop(now + 5.2);
   }
 
   private playImpact(ctx: AudioContext, now: number): void {
-    const t = now + 1.6;
+    const t = now + 4.5;
 
     const noise = ctx.createBufferSource();
-    noise.buffer = this.whiteNoiseBuffer(ctx, 0.4);
+    noise.buffer = this.whiteNoiseBuffer(ctx, 0.6);
 
     const lowpass = ctx.createBiquadFilter();
     lowpass.type = 'lowpass';
     lowpass.frequency.setValueAtTime(4000, t);
-    lowpass.frequency.exponentialRampToValueAtTime(200, t + 0.4);
+    lowpass.frequency.exponentialRampToValueAtTime(200, t + 0.6);
 
     const noiseGain = ctx.createGain();
     noiseGain.gain.setValueAtTime(0.0001, t);
     noiseGain.gain.exponentialRampToValueAtTime(0.8, t + 0.03);
-    noiseGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
 
     const boom = ctx.createOscillator();
     boom.type = 'sine';
     boom.frequency.setValueAtTime(180, t);
-    boom.frequency.exponentialRampToValueAtTime(40, t + 0.35);
+    boom.frequency.exponentialRampToValueAtTime(40, t + 0.5);
 
     const boomGain = ctx.createGain();
     boomGain.gain.setValueAtTime(0.0001, t);
     boomGain.gain.exponentialRampToValueAtTime(0.6, t + 0.02);
-    boomGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    boomGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
 
     noise.connect(lowpass).connect(noiseGain).connect(ctx.destination);
     boom.connect(boomGain).connect(ctx.destination);
 
     noise.start(t);
-    noise.stop(t + 0.4);
+    noise.stop(t + 0.6);
     boom.start(t);
-    boom.stop(t + 0.4);
+    boom.stop(t + 0.6);
   }
 
   private whiteNoiseBuffer(ctx: AudioContext, seconds: number): AudioBuffer {

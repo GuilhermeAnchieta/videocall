@@ -62,13 +62,13 @@ export class CallRoomComponent implements OnInit, OnDestroy {
    *   TELEPORT_PHASE_FLASH_END -> TELEPORT_PHASE_BLACKOUT_END : hard cut to black (bots dropped here)
    *   TELEPORT_PHASE_BLACKOUT_END -> TELEPORT_EFFECT_DURATION : fade back in
    */
-  private static readonly TELEPORT_PHASE_SHAKE_END = 500;
-  private static readonly TELEPORT_PHASE_VORTEX_END = 1600;
-  private static readonly TELEPORT_PHASE_FLASH_END = 1900;
-  private static readonly TELEPORT_PHASE_BLACKOUT_END = 2300;
-  private static readonly TELEPORT_EFFECT_DURATION = 2800;
+  private static readonly TELEPORT_PHASE_SHAKE_END = 1200;
+  private static readonly TELEPORT_PHASE_VORTEX_END = 4500;
+  private static readonly TELEPORT_PHASE_FLASH_END = 5200;
+  private static readonly TELEPORT_PHASE_BLACKOUT_END = 6000;
+  private static readonly TELEPORT_EFFECT_DURATION = 7000;
   /** Exactly mid-blackout (between FLASH_END and BLACKOUT_END) so nobody sees the bots vanish. */
-  private static readonly TELEPORT_DROP_AT = 2100;
+  private static readonly TELEPORT_DROP_AT = 5600;
   private teleportEffectTimer?: ReturnType<typeof setTimeout>;
   private teleportDropTimer?: ReturnType<typeof setTimeout>;
 
