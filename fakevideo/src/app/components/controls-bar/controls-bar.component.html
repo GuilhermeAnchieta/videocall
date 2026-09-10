@@ -52,7 +52,9 @@
           title="Choose microphone and speaker"
           (click)="toggleMicMenu()"
         >
-          <span class="material-symbols-outlined">expand_less</span>
+          <span class="icon-chip">
+            <span class="material-symbols-outlined">expand_less</span>
+          </span>
         </button>
         <button
           type="button"
@@ -61,9 +63,11 @@
           [title]="micEnabled() ? 'Turn off microphone' : 'Turn on microphone'"
           (click)="toggleMic.emit()"
         >
-          <span class="material-symbols-outlined">{{
-            micEnabled() ? "mic" : "mic_off"
-          }}</span>
+          <span class="icon-chip">
+            <span class="material-symbols-outlined">{{
+              micEnabled() ? "mic" : "mic_off"
+            }}</span>
+          </span>
         </button>
       </div>
     </div>
@@ -100,7 +104,9 @@
           title="Choose camera"
           (click)="toggleCameraMenu()"
         >
-          <span class="material-symbols-outlined">expand_less</span>
+          <span class="icon-chip">
+            <span class="material-symbols-outlined">expand_less</span>
+          </span>
         </button>
         <button
           type="button"
@@ -109,9 +115,11 @@
           [title]="cameraEnabled() ? 'Turn off camera' : 'Turn on camera'"
           (click)="toggleCamera.emit()"
         >
-          <span class="material-symbols-outlined">{{
-            cameraEnabled() ? "videocam" : "videocam_off"
-          }}</span>
+          <span class="icon-chip">
+            <span class="material-symbols-outlined">{{
+              cameraEnabled() ? "videocam" : "videocam_off"
+            }}</span>
+          </span>
         </button>
       </div>
     </div>

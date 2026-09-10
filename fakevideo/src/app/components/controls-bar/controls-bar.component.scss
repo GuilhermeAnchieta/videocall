@@ -76,10 +76,18 @@
     transform: scale(0.95);
   }
 
+  // Mic/camera muted state: dark maroon outer button + brighter red inset chip around the
+  // icon (see .icon-chip) instead of one flat red fill, matching Meet's two-tone look. The
+  // hangup button below also uses .off's flat-red look is intentionally NOT reused here — it
+  // stays a plain filled pill, since Meet's hangup has no chip effect.
   &.off {
-    background: #ea4335;
+    background: #4a2426;
 
-    &:hover {
+    .icon-chip {
+      background: #ea4335;
+    }
+
+    &:hover .icon-chip {
       background: #d33b2c;
     }
   }
@@ -148,28 +156,39 @@
   display: flex;
 }
 
-// The chevron and its main button are two buttons stacked into what should read as a single
-// pill: overflow:hidden on this wrapper clips both children's own corners flush, so only the
-// wrapper's own border-radius shows — no gap/seam between the two, matching Meet's mic/camera
-// control where the device-picker chevron and the mute toggle look like one continuous shape.
+// The chevron and its main button are two visually separate rounded pieces stacked with a
+// small gap — not fused into one shape — matching Meet's mic/camera control.
 .pair-shape {
   display: flex;
   flex-direction: column;
+  align-items: center;
   width: 48px;
-  border-radius: 16px;
-  overflow: hidden;
+  gap: 4px;
 
   .control-btn {
     width: 100%;
-    border-radius: 0;
   }
 }
 
+// Icon sits on its own inset "chip": in the muted state the outer button becomes a dark
+// maroon and the chip a brighter red, reproducing Meet's two-tone muted look instead of a
+// single flat red fill. Unmuted/inactive states keep the chip transparent (just the icon).
+.icon-chip {
+  position: absolute;
+  inset: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  transition: background-color 150ms ease;
+}
+
 .chevron-btn {
+  position: relative;
   width: 100%;
-  height: 16px;
+  height: 20px;
   border: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
   background: #3c4043;
   color: #e8eaed;
   display: flex;
@@ -178,6 +197,11 @@
   cursor: pointer;
   flex-shrink: 0;
   transition: background-color 150ms ease;
+
+  .icon-chip {
+    inset: 2px;
+    border-radius: 6px;
+  }
 
   .material-symbols-outlined {
     font-size: 14px;
@@ -188,10 +212,13 @@
   }
 
   &.off {
-    background: #ea4335;
-    border-bottom-color: rgba(0, 0, 0, 0.35);
+    background: #4a2426;
 
-    &:hover {
+    .icon-chip {
+      background: #ea4335;
+    }
+
+    &:hover .icon-chip {
       background: #d33b2c;
     }
   }
