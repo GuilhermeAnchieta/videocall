@@ -45,6 +45,15 @@ export class FakeParticipantsService {
   );
 
   async add(roomCode: string, clip: ClipInfo, name: string): Promise<void> {
+    // Create and resume the AudioContext as the very first thing, still inside the synchronous
+    // call stack of the owner's click on the clips panel. Safari/WebKit (relevant here since the
+    // app also ships via Capacitor) only honors resume() as "in response to a user gesture" when
+    // it's invoked before any `await` breaks that call stack; every await below (token fetch, room
+    // connect, video decode) would otherwise consume the gesture and leave the context permanently
+    // 'suspended' — which produces silence on the published track for every participant, forever.
+    const audioContext = new AudioContext();
+    const audioContextResumed = audioContext.resume();
+
     const { token, livekitUrl } = await this.roomService.getAccessToken(
       roomCode,
       name,
@@ -57,9 +66,7 @@ export class FakeParticipantsService {
     });
 
     const id = crypto.randomUUID();
-    console.log('[fake] add() starting, id=', id, 'name=', name);
     room.once(RoomEvent.Disconnected, () => {
-      console.log('[fake] Disconnected event, removing from entries, id=', id);
       this.entries.update((list) => list.filter((entry) => entry.id !== id));
     });
 
@@ -78,7 +85,6 @@ export class FakeParticipantsService {
     videoEl.style.display = 'none';
     document.body.appendChild(videoEl);
 
-    let audioContext: AudioContext | undefined;
     try {
       await videoEl.play();
       const captured = videoEl.captureStream(30);
@@ -88,12 +94,7 @@ export class FakeParticipantsService {
       // graph is never connected to audioContext.destination — so this decouples the published
       // track from local playback entirely, instead of relying on videoEl.muted (which, on some
       // browsers, silences captureStream()'s audio too when the element itself is muted).
-      audioContext = new AudioContext();
-      // Browsers create AudioContext in a 'suspended' state unless a user gesture is already in
-      // progress; while suspended, the graph produces silence, which would mute the published
-      // track for everyone even though the fake participant is "on". add() is always called from
-      // the owner's click on the clips panel, so a gesture is available to resume it.
-      await audioContext.resume();
+      await audioContextResumed;
       const source = audioContext.createMediaElementSource(videoEl);
       const destination = audioContext.createMediaStreamDestination();
       source.connect(destination);
@@ -126,14 +127,7 @@ export class FakeParticipantsService {
           micEnabled: true,
         },
       ]);
-      console.log(
-        '[fake] add() succeeded, id=',
-        id,
-        'entries now=',
-        this.entries().map((e) => e.id),
-      );
     } catch (err) {
-      console.log('[fake] add() failed, id=', id, err);
       void audioContext?.close();
       videoEl.remove();
       await room.disconnect();
@@ -161,19 +155,10 @@ export class FakeParticipantsService {
    * during the drop delay isn't swept away by a removal that was scheduled before it existed. */
   async removeMany(ids: ReadonlySet<string>): Promise<void> {
     const matching = this.entries().filter((entry) => ids.has(entry.id));
-    console.log(
-      '[fake] removeMany called with ids=',
-      [...ids],
-      'current entries=',
-      this.entries().map((e) => e.id),
-      'matching to remove=',
-      matching.map((e) => e.id),
-    );
     await Promise.all(matching.map((entry) => this.remove(entry.id)));
   }
 
   async remove(id: string): Promise<void> {
-    console.trace('[fake] remove() called for id=', id);
     const entry = this.entries().find((e) => e.id === id);
     if (!entry) return;
 

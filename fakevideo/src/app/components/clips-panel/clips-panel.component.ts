@@ -44,14 +44,12 @@ export class ClipsPanelComponent implements OnInit {
 
   async addFakeParticipant(clip: ClipInfo): Promise<void> {
     const name = this.newFakeName().trim() || clip.name;
-    console.log('[clips-panel] addFakeParticipant clicked, clip=', clip.id, 'name=', name, 'at', Date.now());
     this.addingFakeClipId.set(clip.id);
     this.errorMessage.set(null);
     try {
       await this.fakeParticipants.add(this.roomCode(), clip, name);
       this.newFakeName.set('');
-    } catch (err) {
-      console.log('[clips-panel] addFakeParticipant failed', err);
+    } catch {
       this.errorMessage.set(`Could not add "${name}" as a fake participant.`);
     } finally {
       this.addingFakeClipId.set(null);
