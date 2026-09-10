@@ -1,5 +1,13 @@
 <div class="tile" [class.speaking]="participant().isSpeaking" [class.frozen]="frozen()">
-  <video #videoEl class="tile-video" [class.hidden]="!participant().cameraEnabled" autoplay playsinline muted></video>
+  <video
+    #videoEl
+    class="tile-video"
+    [class.hidden]="!participant().cameraEnabled"
+    [class.mirrored]="!participant().isFake"
+    autoplay
+    playsinline
+    muted
+  ></video>
 
   @if (!participant().cameraEnabled) {
     <div class="avatar">

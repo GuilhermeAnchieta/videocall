@@ -77,28 +77,31 @@ export class FakeParticipantsService {
     videoEl.loop = true;
     videoEl.preload = 'auto';
     videoEl.crossOrigin = 'anonymous';
-    // Always muted: this element exists only to feed captureStream()'s video track and, via the
-    // AudioContext graph below, the published audio track. It must never be heard directly out of
-    // this device's speakers — whoever added the clip already hears the fake participant through
-    // the normal remote-audio path (AudioOutputService), which does respect the mic mute state.
-    videoEl.muted = true;
+    // Deliberately NOT muted. createMediaElementSource() below already reroutes this element's
+    // entire audio output into the AudioContext graph — per spec, once that call is made, the
+    // element itself can no longer be heard directly (its audio only reaches wherever the graph
+    // is connected, which here is a MediaStreamDestination, never audioContext.destination). Muting
+    // the element on top of that was redundant, and on some Chromium builds `muted` also zeroes out
+    // the samples reaching the graph itself (the same effect this file previously hit with
+    // captureStream()'s audio track) — silencing the published track for everyone, not just locally.
     videoEl.style.display = 'none';
     document.body.appendChild(videoEl);
 
     try {
-      await videoEl.play();
-      const captured = videoEl.captureStream(30);
-      const videoMediaTrack = captured.getVideoTracks()[0];
-
-      // The audio track is sourced from a Web Audio graph instead of captureStream(), and that
-      // graph is never connected to audioContext.destination — so this decouples the published
-      // track from local playback entirely, instead of relying on videoEl.muted (which, on some
-      // browsers, silences captureStream()'s audio too when the element itself is muted).
+      // Wired up before play() starts: createMediaElementSource() reroutes the element's audio
+      // output into this graph, so connecting it first means playback never has a chance to reach
+      // this device's speakers directly, not even for the single frame it'd otherwise take.
       await audioContextResumed;
       const source = audioContext.createMediaElementSource(videoEl);
       const destination = audioContext.createMediaStreamDestination();
       source.connect(destination);
       const audioMediaTrack = destination.stream.getAudioTracks()[0];
+
+      // The audio track is sourced from this Web Audio graph rather than captureStream() (whose
+      // audio track came back silent while videoEl was muted, before this used createMediaElementSource).
+      await videoEl.play();
+      const captured = videoEl.captureStream(30);
+      const videoMediaTrack = captured.getVideoTracks()[0];
 
       const videoPublication = await room.localParticipant.publishTrack(
         videoMediaTrack,

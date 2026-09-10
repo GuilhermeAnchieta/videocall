@@ -36,7 +36,6 @@ export class ClipsPanelComponent implements OnInit {
       this.clips.set(clips);
       clips.slice(0, 3).forEach((clip) => this.mediaSource.preloadClip(clip));
     } catch {
-      this.errorMessage.set('Could not load the clip library.');
     } finally {
       this.loading.set(false);
     }
