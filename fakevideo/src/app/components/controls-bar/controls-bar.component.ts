@@ -26,7 +26,6 @@ export class ControlsBarComponent {
 
   readonly micEnabled = input.required<boolean>();
   readonly cameraEnabled = input.required<boolean>();
-  readonly usingClip = input<boolean>(false);
   readonly participantsOpen = input<boolean>(false);
   readonly chatOpen = input<boolean>(false);
   readonly visible = input<boolean>(true);

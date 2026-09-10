@@ -38,7 +38,6 @@ export class FakeParticipantsService {
       cameraEnabled: entry.cameraEnabled,
       micEnabled: entry.micEnabled,
       isSpeaking: false,
-      usingClip: false,
       isFake: true,
       fakeId: entry.id
     }))
@@ -54,7 +53,9 @@ export class FakeParticipantsService {
     });
 
     const id = crypto.randomUUID();
+    console.log('[fake] add() starting, id=', id, 'name=', name);
     room.once(RoomEvent.Disconnected, () => {
+      console.log('[fake] Disconnected event, removing from entries, id=', id);
       this.entries.update((list) => list.filter((entry) => entry.id !== id));
     });
 
@@ -96,7 +97,9 @@ export class FakeParticipantsService {
           micEnabled: true
         }
       ]);
+      console.log('[fake] add() succeeded, id=', id, 'entries now=', this.entries().map((e) => e.id));
     } catch (err) {
+      console.log('[fake] add() failed, id=', id, err);
       videoEl.remove();
       await room.disconnect();
       throw err;
@@ -122,14 +125,20 @@ export class FakeParticipantsService {
   /** Removes only the given fake participants — used by the teleport effect so a clip added
    * during the drop delay isn't swept away by a removal that was scheduled before it existed. */
   async removeMany(ids: ReadonlySet<string>): Promise<void> {
-    await Promise.all(
-      this.entries()
-        .filter((entry) => ids.has(entry.id))
-        .map((entry) => this.remove(entry.id))
+    const matching = this.entries().filter((entry) => ids.has(entry.id));
+    console.log(
+      '[fake] removeMany called with ids=',
+      [...ids],
+      'current entries=',
+      this.entries().map((e) => e.id),
+      'matching to remove=',
+      matching.map((e) => e.id)
     );
+    await Promise.all(matching.map((entry) => this.remove(entry.id)));
   }
 
   async remove(id: string): Promise<void> {
+    console.trace('[fake] remove() called for id=', id);
     const entry = this.entries().find((e) => e.id === id);
     if (!entry) return;
 

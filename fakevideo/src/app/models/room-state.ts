@@ -1,7 +1,5 @@
 import type { Track } from 'livekit-client';
 
-export type MediaMode = 'camera' | 'clip';
-
 export interface ClipInfo {
   id: string;
   name: string;
@@ -21,7 +19,6 @@ export interface ParticipantView {
   cameraEnabled: boolean;
   micEnabled: boolean;
   isSpeaking: boolean;
-  usingClip: boolean;
   /** "Bot" participant: a separate LiveKit connection publishing a clip, controlled by the room owner. */
   isFake: boolean;
   /** Internal id in FakeParticipantsService (present only when isFake is true). */

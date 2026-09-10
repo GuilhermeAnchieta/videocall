@@ -130,34 +130,6 @@
   line-height: 1.4;
 }
 
-.camera-option {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #5f6368;
-  background: transparent;
-  color: #e8eaed;
-  font-size: 14px;
-  cursor: pointer;
-
-  &:hover {
-    background: #3c4043;
-  }
-
-  &.active {
-    border-color: #8ab4f8;
-    background: rgba(138, 180, 248, 0.12);
-  }
-
-  .check {
-    margin-left: auto;
-    color: #8ab4f8;
-  }
-}
-
 .clip-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -184,21 +156,6 @@
   &:disabled {
     opacity: 0.6;
     cursor: default;
-  }
-
-  &.active {
-    border-color: #8ab4f8;
-    background: rgba(138, 180, 248, 0.12);
-  }
-
-  .check {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    color: #8ab4f8;
-    background: #202124;
-    border-radius: 50%;
-    font-size: 18px;
   }
 }
 
