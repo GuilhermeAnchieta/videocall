@@ -61,7 +61,8 @@ export class ControlsBarComponent implements OnDestroy {
 
   pickReaction(emoji: string): void {
     this.sendReaction.emit(emoji);
-    this.reactionMenuOpen.set(false);
+    // Stays open on purpose (unlike the device-picker popovers) so sending a few reactions in
+    // a row doesn't require reopening the picker each time — matches Meet's reaction bar.
   }
 
   readonly confirmingLeave = signal(false);
