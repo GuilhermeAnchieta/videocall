@@ -107,7 +107,12 @@ export class JoinRoomComponent implements OnInit, OnDestroy {
     this.joining.set(true);
     this.stopPreview();
     await this.router.navigate(['/call', code], {
-      queryParams: { name, host: isHost ? '1' : null }
+      queryParams: {
+        name,
+        host: isHost ? '1' : null,
+        mic: this.previewMicEnabled() ? '1' : '0',
+        camera: this.previewCameraEnabled() ? '1' : '0'
+      }
     });
   }
 

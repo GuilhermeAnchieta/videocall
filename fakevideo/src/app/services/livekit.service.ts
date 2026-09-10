@@ -1,5 +1,13 @@
 import { Injectable, signal } from '@angular/core';
-import { LocalParticipant, LocalTrack, Participant, Room, RoomEvent, Track, VideoPresets } from 'livekit-client';
+import {
+  LocalParticipant,
+  LocalTrack,
+  Participant,
+  Room,
+  RoomEvent,
+  Track,
+  VideoPresets,
+} from 'livekit-client';
 import { ChatMessage, ParticipantView } from '../models/room-state';
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected';
@@ -18,7 +26,12 @@ export class LivekitService {
     return this.room?.localParticipant;
   }
 
-  async connect(url: string, token: string): Promise<void> {
+  async connect(
+    url: string,
+    token: string,
+    options: { micEnabled?: boolean; cameraEnabled?: boolean } = {},
+  ): Promise<void> {
+    const { micEnabled = true, cameraEnabled = true } = options;
     this.connectionState.set('connecting');
     // teleportPulse is a service-wide signal that outlives a single call — reset it so a
     // teleport played in a previous room doesn't replay itself the instant this one mounts.
@@ -30,27 +43,37 @@ export class LivekitService {
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,
-        channelCount: 1
+        channelCount: 1,
       },
       videoCaptureDefaults: {
         resolution: VideoPresets.h720.resolution,
-        facingMode: 'user'
+        facingMode: 'user',
       },
       publishDefaults: {
         videoEncoding: VideoPresets.h720.encoding,
         simulcast: true,
         dtx: true,
-        red: true
-      }
+        red: true,
+      },
     });
     this.room = room;
     this.bindEvents(room);
 
+    // Joining the room (signaling) is kept separate from acquiring the camera/mic: a
+    // getUserMedia() call that hangs (e.g. camera disabled/blocked at the OS level on some
+    // browsers) must not leave the "joining" screen stuck forever once the room itself connected.
     await room.connect(url, token);
     await room.localParticipant.setMicrophoneEnabled(true);
     await room.localParticipant.setCameraEnabled(true);
 
     this.connectionState.set('connected');
+    this.sync();
+
+    await Promise.allSettled([
+      micEnabled ? room.localParticipant.setMicrophoneEnabled(true) : undefined,
+      cameraEnabled ? room.localParticipant.setCameraEnabled(true) : undefined,
+    ]);
+    if (micEnabled) await this.applyNoiseFilter();
     this.sync();
   }
 
@@ -101,7 +124,7 @@ export class LivekitService {
       senderName: local.name || local.identity,
       text: trimmed,
       timestamp: Date.now(),
-      isLocal: true
+      isLocal: true,
     };
     this.chatMessages.update((list) => [...list, message]);
 
@@ -114,15 +137,21 @@ export class LivekitService {
     this.teleportPulse.update((n) => n + 1);
     const local = this.room?.localParticipant;
     if (!local) return;
-    void local.publishData(new TextEncoder().encode('teleport'), { reliable: true, topic: 'teleport' });
+    void local.publishData(new TextEncoder().encode('teleport'), {
+      reliable: true,
+      topic: 'teleport',
+    });
   }
 
   getLocalVideoTrack(): LocalTrack | undefined {
-    return this.room?.localParticipant.getTrackPublication(Track.Source.Camera)?.track;
+    return this.room?.localParticipant.getTrackPublication(Track.Source.Camera)
+      ?.track;
   }
 
   getLocalAudioTrack(): LocalTrack | undefined {
-    return this.room?.localParticipant.getTrackPublication(Track.Source.Microphone)?.track;
+    return this.room?.localParticipant.getTrackPublication(
+      Track.Source.Microphone,
+    )?.track;
   }
 
   /** Refresh derived participant state after a track swap that doesn't go through publish/unpublish events. */
@@ -153,8 +182,13 @@ export class LivekitService {
         }
         if (topic !== 'chat') return;
         try {
-          const message = JSON.parse(new TextDecoder().decode(payload)) as ChatMessage;
-          this.chatMessages.update((list) => [...list, { ...message, isLocal: false }]);
+          const message = JSON.parse(
+            new TextDecoder().decode(payload),
+          ) as ChatMessage;
+          this.chatMessages.update((list) => [
+            ...list,
+            { ...message, isLocal: false },
+          ]);
         } catch {
           // ignore malformed chat payloads
         }
@@ -168,13 +202,19 @@ export class LivekitService {
       return;
     }
     const list: ParticipantView[] = [this.toView(room.localParticipant, true)];
-    room.remoteParticipants.forEach((participant) => list.push(this.toView(participant, false)));
+    room.remoteParticipants.forEach((participant) =>
+      list.push(this.toView(participant, false)),
+    );
     this.participants.set(list);
   }
 
   private toView(participant: Participant, isLocal: boolean): ParticipantView {
-    const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
-    const microphonePublication = participant.getTrackPublication(Track.Source.Microphone);
+    const cameraPublication = participant.getTrackPublication(
+      Track.Source.Camera,
+    );
+    const microphonePublication = participant.getTrackPublication(
+      Track.Source.Microphone,
+    );
     return {
       identity: participant.identity,
       name: participant.name || participant.identity,
@@ -185,7 +225,7 @@ export class LivekitService {
       micEnabled: participant.isMicrophoneEnabled,
       isSpeaking: participant.isSpeaking,
       usingClip: false,
-      isFake: false
+      isFake: false,
     };
   }
 }
