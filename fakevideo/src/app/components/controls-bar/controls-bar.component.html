@@ -43,18 +43,15 @@
         </div>
       }
 
-      <div class="pair-shape">
+      <div class="pair-shape" [class.off]="!micEnabled()">
         <button
           type="button"
           class="chevron-btn"
-          [class.off]="!micEnabled()"
           [class.active]="micMenuOpen()"
           title="Choose microphone and speaker"
           (click)="toggleMicMenu()"
         >
-          <span class="icon-chip">
-            <span class="material-symbols-outlined">expand_less</span>
-          </span>
+          <span class="material-symbols-outlined">expand_less</span>
         </button>
         <button
           type="button"
@@ -63,11 +60,9 @@
           [title]="micEnabled() ? 'Turn off microphone' : 'Turn on microphone'"
           (click)="toggleMic.emit()"
         >
-          <span class="icon-chip">
-            <span class="material-symbols-outlined">{{
-              micEnabled() ? "mic" : "mic_off"
-            }}</span>
-          </span>
+          <span class="material-symbols-outlined">{{
+            micEnabled() ? "mic" : "mic_off"
+          }}</span>
         </button>
       </div>
     </div>
@@ -95,18 +90,15 @@
         </div>
       }
 
-      <div class="pair-shape">
+      <div class="pair-shape" [class.off]="!cameraEnabled()">
         <button
           type="button"
           class="chevron-btn"
-          [class.off]="!cameraEnabled()"
           [class.active]="cameraMenuOpen()"
           title="Choose camera"
           (click)="toggleCameraMenu()"
         >
-          <span class="icon-chip">
-            <span class="material-symbols-outlined">expand_less</span>
-          </span>
+          <span class="material-symbols-outlined">expand_less</span>
         </button>
         <button
           type="button"
@@ -115,11 +107,9 @@
           [title]="cameraEnabled() ? 'Turn off camera' : 'Turn on camera'"
           (click)="toggleCamera.emit()"
         >
-          <span class="icon-chip">
-            <span class="material-symbols-outlined">{{
-              cameraEnabled() ? "videocam" : "videocam_off"
-            }}</span>
-          </span>
+          <span class="material-symbols-outlined">{{
+            cameraEnabled() ? "videocam" : "videocam_off"
+          }}</span>
         </button>
       </div>
     </div>

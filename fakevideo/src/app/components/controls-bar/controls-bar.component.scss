@@ -76,19 +76,16 @@
     transform: scale(0.95);
   }
 
-  // Mic/camera muted state: dark maroon outer button + brighter red inset chip around the
-  // icon (see .icon-chip) instead of one flat red fill, matching Meet's two-tone look. The
-  // hangup button below also uses .off's flat-red look is intentionally NOT reused here — it
-  // stays a plain filled pill, since Meet's hangup has no chip effect.
+  // Mic/camera muted state: a light pink fill with a dark red icon — the lighter half of
+  // Meet's two-tone muted pair (see .chevron-btn.off for the darker half sitting next to it).
+  // The hangup button's &.off-less .leave rule below stays flat red — Meet's hangup has no
+  // two-tone treatment.
   &.off {
-    background: #4a2426;
+    background: #f6cfc9;
+    color: #8c1d18;
 
-    .icon-chip {
-      background: #ea4335;
-    }
-
-    &:hover .icon-chip {
-      background: #d33b2c;
+    &:hover {
+      background: #f2b8b0;
     }
   }
 
@@ -156,76 +153,80 @@
   display: flex;
 }
 
-// The chevron and its main button are two visually separate rounded pieces stacked with a
-// small gap — not fused into one shape — matching Meet's mic/camera control.
+// One shared background spans the whole pair (chevron + icon) — the chevron has no box of
+// its own, it just sits on this background. The icon button is a smaller, inset "chip"
+// floating on top of it (see .pair-shape .control-btn below): in the unmuted state the chip
+// is transparent so the pair reads as one plain gray shape, and in the muted state the chip
+// turns light pink, popping out against the shared dark maroon behind it — matching Meet.
 .pair-shape {
+  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  width: 48px;
-  gap: 4px;
+  height: 48px;
+  border-radius: 16px;
+  background: #3c4043;
+  overflow: hidden;
+  transition: background-color 150ms ease;
 
-  .control-btn {
-    width: 100%;
+  &.off {
+    background: #442726;
   }
 }
 
-// Icon sits on its own inset "chip": in the muted state the outer button becomes a dark
-// maroon and the chip a brighter red, reproducing Meet's two-tone muted look instead of a
-// single flat red fill. Unmuted/inactive states keep the chip transparent (just the icon).
-.icon-chip {
-  position: absolute;
-  inset: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  transition: background-color 150ms ease;
-}
-
 .chevron-btn {
-  position: relative;
-  width: 100%;
-  height: 20px;
+  width: 28px;
+  height: 100%;
   border: none;
-  border-radius: 10px;
-  background: #3c4043;
+  background: transparent;
   color: #e8eaed;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background-color 150ms ease;
-
-  .icon-chip {
-    inset: 2px;
-    border-radius: 6px;
-  }
+  transition: background-color 150ms ease, color 150ms ease;
 
   .material-symbols-outlined {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   &:hover {
-    background: #4a4d51;
-  }
-
-  &.off {
-    background: #4a2426;
-
-    .icon-chip {
-      background: #ea4335;
-    }
-
-    &:hover .icon-chip {
-      background: #d33b2c;
-    }
+    background: rgba(255, 255, 255, 0.08);
   }
 
   &.active {
     background: #8ab4f8;
     color: #202124;
+  }
+}
+
+.pair-shape.off .chevron-btn {
+  color: #f6cfc9;
+}
+
+// The icon "chip": inset from the shared pair-shape background on every side, so the
+// background shows through as a frame around it — like the icon floating on top of the
+// shared shape instead of owning the full-height/width slot next to the chevron.
+.pair-shape .control-btn {
+  width: auto;
+  flex: 1;
+  height: auto;
+  align-self: stretch;
+  margin: 4px;
+  border-radius: 12px;
+  background: transparent;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  &.off {
+    background: #f6cfc9;
+    color: #8c1d18;
+
+    &:hover {
+      background: #f2b8b0;
+    }
   }
 }
 
@@ -386,7 +387,11 @@
   }
 
   .pair-shape {
-    width: 44px;
+    height: 44px;
+  }
+
+  .chevron-btn {
+    width: 26px;
   }
 }
 
@@ -414,11 +419,11 @@
   }
 
   .pair-shape {
-    width: 38px;
+    height: 38px;
   }
 
   .chevron-btn {
-    height: 14px;
+    width: 22px;
 
     .material-symbols-outlined {
       font-size: 12px;
