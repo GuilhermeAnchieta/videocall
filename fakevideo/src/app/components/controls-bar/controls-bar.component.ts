@@ -3,6 +3,8 @@ import {
   ElementRef,
   HostBinding,
   HostListener,
+  OnDestroy,
+  effect,
   inject,
   input,
   output,
@@ -20,7 +22,7 @@ import { AudioOutputService } from '../../services/audio-output.service';
   templateUrl: './controls-bar.component.html',
   styleUrl: './controls-bar.component.scss'
 })
-export class ControlsBarComponent {
+export class ControlsBarComponent implements OnDestroy {
   private readonly livekit = inject(LivekitService);
   private readonly audioOutput = inject(AudioOutputService);
 
@@ -128,8 +130,61 @@ export class ControlsBarComponent {
   readonly selectedSpeakerId = signal<string | undefined>(undefined);
   readonly selectedCameraId = signal<string | undefined>(undefined);
 
+  // Live mic input level (0-1 per bar), driving the 3-bar meter that replaces the chevron
+  // icon while the mic is on — same idea as Meet's mic button.
+  readonly micLevels = signal<[number, number, number]>([0.15, 0.15, 0.15]);
+  private levelAudioContext?: AudioContext;
+  private levelAnalyser?: AnalyserNode;
+  private levelRafId?: number;
+
   constructor() {
     navigator.mediaDevices?.addEventListener?.('devicechange', () => this.refreshDevices());
+
+    effect(() => {
+      if (this.micEnabled()) {
+        this.startMicLevelMonitoring();
+      } else {
+        this.stopMicLevelMonitoring();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.stopMicLevelMonitoring();
+  }
+
+  private startMicLevelMonitoring(): void {
+    this.stopMicLevelMonitoring();
+    const mediaTrack = this.livekit.getLocalAudioTrack()?.mediaStreamTrack;
+    if (!mediaTrack) return;
+
+    this.levelAudioContext = new AudioContext();
+    const source = this.levelAudioContext.createMediaStreamSource(new MediaStream([mediaTrack]));
+    const analyser = this.levelAudioContext.createAnalyser();
+    analyser.fftSize = 32;
+    analyser.smoothingTimeConstant = 0.6;
+    source.connect(analyser);
+    this.levelAnalyser = analyser;
+
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const bar = (i: number) => Math.max(0.15, Math.min(1, (data[i] ?? 0) / 160));
+    const loop = () => {
+      analyser.getByteFrequencyData(data);
+      // Three different frequency bins instead of the same overall level three times, so the
+      // bars move a little independently of each other like Meet's, not in lockstep.
+      this.micLevels.set([bar(1), bar(3), bar(6)]);
+      this.levelRafId = requestAnimationFrame(loop);
+    };
+    loop();
+  }
+
+  private stopMicLevelMonitoring(): void {
+    if (this.levelRafId !== undefined) cancelAnimationFrame(this.levelRafId);
+    this.levelRafId = undefined;
+    this.levelAnalyser = undefined;
+    void this.levelAudioContext?.close();
+    this.levelAudioContext = undefined;
+    this.micLevels.set([0.15, 0.15, 0.15]);
   }
 
   async toggleMicMenu(): Promise<void> {
@@ -159,6 +214,9 @@ export class ControlsBarComponent {
   async onMicSelected(deviceId: string): Promise<void> {
     this.selectedMicId.set(deviceId);
     await this.livekit.switchMicrophone(deviceId);
+    // Switching devices swaps out the underlying MediaStreamTrack, so the analyser needs to be
+    // rebuilt against the new one instead of silently keeping the old (now-stopped) track.
+    if (this.micEnabled()) this.startMicLevelMonitoring();
   }
 
   async onSpeakerSelected(deviceId: string): Promise<void> {

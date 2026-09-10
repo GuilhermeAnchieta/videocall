@@ -51,7 +51,15 @@
           title="Choose microphone and speaker"
           (click)="toggleMicMenu()"
         >
-          <span class="material-symbols-outlined">expand_less</span>
+          @if (micEnabled()) {
+            <span class="audio-bars" aria-hidden="true">
+              <span class="audio-bar" [style.height.%]="micLevels()[0] * 100"></span>
+              <span class="audio-bar" [style.height.%]="micLevels()[1] * 100"></span>
+              <span class="audio-bar" [style.height.%]="micLevels()[2] * 100"></span>
+            </span>
+          } @else {
+            <span class="material-symbols-outlined">expand_less</span>
+          }
         </button>
         <button
           type="button"
