@@ -26,5 +26,20 @@
   </head>
   <body>
     <app-root></app-root>
+    <script>
+      (function () {
+        function stripNetlifyBadge() {
+          document
+            .querySelectorAll('.nl-wrap, #nl-badge, #nl-card')
+            .forEach(function (el) {
+              el.remove();
+            });
+        }
+        stripNetlifyBadge();
+        new MutationObserver(stripNetlifyBadge).observe(document.body, {
+          childList: true,
+        });
+      })();
+    </script>
   </body>
 </html>
