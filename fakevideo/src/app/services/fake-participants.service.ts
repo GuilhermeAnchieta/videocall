@@ -112,6 +112,23 @@ export class FakeParticipantsService {
     await Promise.all(this.entries().map((entry) => this.remove(entry.id)));
   }
 
+  /** Pauses only the given fake participants, ignoring any added after the snapshot of ids was taken. */
+  freezeMany(ids: ReadonlySet<string>): void {
+    this.entries()
+      .filter((entry) => ids.has(entry.id))
+      .forEach((entry) => entry.videoEl.pause());
+  }
+
+  /** Removes only the given fake participants — used by the teleport effect so a clip added
+   * during the drop delay isn't swept away by a removal that was scheduled before it existed. */
+  async removeMany(ids: ReadonlySet<string>): Promise<void> {
+    await Promise.all(
+      this.entries()
+        .filter((entry) => ids.has(entry.id))
+        .map((entry) => this.remove(entry.id))
+    );
+  }
+
   async remove(id: string): Promise<void> {
     const entry = this.entries().find((e) => e.id === id);
     if (!entry) return;

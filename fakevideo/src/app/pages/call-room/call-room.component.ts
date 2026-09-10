@@ -262,12 +262,15 @@ export class CallRoomComponent implements OnInit, OnDestroy {
 
     if (!this.isOwner()) return;
 
-    this.fakeParticipants.freezeAll();
-    this.frozenFakeIds.set(new Set(this.fakeParticipants.participantViews().map((p) => p.fakeId!)));
+    // Snapshot who's here right now: a clip added during the drop delay below must not be
+    // swept away by a removal that was scheduled before it even existed.
+    const idsAtTrigger = new Set(this.fakeParticipants.participantViews().map((p) => p.fakeId!));
+    this.fakeParticipants.freezeMany(idsAtTrigger);
+    this.frozenFakeIds.set(idsAtTrigger);
 
     clearTimeout(this.teleportDropTimer);
     this.teleportDropTimer = setTimeout(async () => {
-      await this.fakeParticipants.removeAll();
+      await this.fakeParticipants.removeMany(idsAtTrigger);
       this.frozenFakeIds.set(new Set());
     }, CallRoomComponent.TELEPORT_EFFECT_DURATION + CallRoomComponent.TELEPORT_DROP_DELAY);
   }
