@@ -26,9 +26,9 @@
 .bar-pill {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 28px;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 30px;
   background: #202124;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
 
@@ -55,9 +55,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
   border: none;
   background: #3c4043;
   color: #e8eaed;
@@ -96,8 +96,8 @@
 
   &.leave {
     background: #ea4335;
-    width: 64px;
-    border-radius: 24px;
+    width: 70px;
+    border-radius: 26px;
 
     &:hover {
       background: #d33b2c;
@@ -162,8 +162,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  height: 48px;
-  border-radius: 16px;
+  height: 52px;
+  border-radius: 18px;
   background: #3c4043;
   overflow: hidden;
   transition: background-color 150ms ease;
@@ -174,7 +174,7 @@
 }
 
 .chevron-btn {
-  width: 30px;
+  width: 34px;
   height: 100%;
   border: none;
   background: transparent;
@@ -205,19 +205,21 @@
 }
 
 // Replaces the chevron icon while the mic is on: 3 little bars whose height tracks live
-// input level (see ControlsBarComponent.micLevels), like Meet's mic button.
+// input level (see ControlsBarComponent.micLevels), like Meet's mic button. Fixed px sizing
+// (not nested percentages) keeps the bars crisply centered instead of drifting/rounding
+// differently as they animate.
 .audio-bars {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   width: 100%;
-  height: 60%;
+  height: 16px;
 }
 
 .audio-bar {
   width: 3px;
-  height: 15%;
+  height: 4px;
   border-radius: 2px;
   background: #8ab4f8;
   transition: height 100ms ease;
@@ -231,8 +233,8 @@
   flex: 1;
   height: auto;
   align-self: stretch;
-  margin: 3px;
-  border-radius: 12px;
+  margin: 4px;
+  border-radius: 14px;
   background: transparent;
 
   &:hover {
@@ -397,20 +399,20 @@
   }
 
   .control-btn {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
 
     &.leave {
-      width: 56px;
+      width: 60px;
     }
   }
 
   .pair-shape {
-    height: 44px;
+    height: 48px;
   }
 
   .chevron-btn {
-    width: 26px;
+    width: 30px;
   }
 }
 
@@ -425,24 +427,24 @@
   }
 
   .control-btn {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
 
     .material-symbols-outlined {
       font-size: 19px;
     }
 
     &.leave {
-      width: 48px;
+      width: 50px;
     }
   }
 
   .pair-shape {
-    height: 38px;
+    height: 40px;
   }
 
   .chevron-btn {
-    width: 22px;
+    width: 24px;
 
     .material-symbols-outlined {
       font-size: 12px;

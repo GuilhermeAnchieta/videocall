@@ -167,7 +167,18 @@ export class ControlsBarComponent implements OnDestroy {
     this.levelAnalyser = analyser;
 
     const data = new Uint8Array(analyser.frequencyBinCount);
-    const bar = (i: number) => Math.max(0.15, Math.min(1, (data[i] ?? 0) / 160));
+    // Byte values below this are treated as silence: this is what's captured by THIS device's
+    // own microphone (getLocalAudioTrack() is always the local mic, never a remote
+    // participant's), but without headphones a mic can still physically pick up other people's
+    // voices leaking out of this device's own speakers. A noise floor keeps that faint
+    // pickup from moving the bars — only a clearly louder, close-mic signal (the actual user
+    // speaking into it) does.
+    const NOISE_FLOOR = 55;
+    const bar = (i: number) => {
+      const raw = data[i] ?? 0;
+      if (raw < NOISE_FLOOR) return 0.15;
+      return 0.15 + Math.min(1, (raw - NOISE_FLOOR) / (210 - NOISE_FLOOR)) * 0.85;
+    };
     const loop = () => {
       analyser.getByteFrequencyData(data);
       // Three different frequency bins instead of the same overall level three times, so the
