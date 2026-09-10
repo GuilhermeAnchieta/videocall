@@ -76,19 +76,16 @@
     transform: scale(0.95);
   }
 
-  // Mic/camera muted state: dark maroon outer button + brighter red inset chip around the
-  // icon (see .icon-chip) instead of one flat red fill, matching Meet's two-tone look. The
-  // hangup button below also uses .off's flat-red look is intentionally NOT reused here — it
-  // stays a plain filled pill, since Meet's hangup has no chip effect.
+  // Mic/camera muted state: a light pink fill with a dark red icon — the lighter half of
+  // Meet's two-tone muted pair (see .chevron-btn.off for the darker half sitting next to it).
+  // The hangup button's &.off-less .leave rule below stays flat red — Meet's hangup has no
+  // two-tone treatment.
   &.off {
-    background: #4a2426;
+    background: #f6cfc9;
+    color: #8c1d18;
 
-    .icon-chip {
-      background: #ea4335;
-    }
-
-    &:hover .icon-chip {
-      background: #d33b2c;
+    &:hover {
+      background: #f2b8b0;
     }
   }
 
@@ -156,39 +153,20 @@
   display: flex;
 }
 
-// The chevron and its main button are two visually separate rounded pieces stacked with a
-// small gap — not fused into one shape — matching Meet's mic/camera control.
+// Chevron and main icon are two separate squares side by side, not stacked — matching Meet's
+// mic/camera control (a smaller device-picker square next to the larger mute toggle).
 .pair-shape {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  width: 48px;
   gap: 4px;
-
-  .control-btn {
-    width: 100%;
-  }
-}
-
-// Icon sits on its own inset "chip": in the muted state the outer button becomes a dark
-// maroon and the chip a brighter red, reproducing Meet's two-tone muted look instead of a
-// single flat red fill. Unmuted/inactive states keep the chip transparent (just the icon).
-.icon-chip {
-  position: absolute;
-  inset: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  transition: background-color 150ms ease;
 }
 
 .chevron-btn {
-  position: relative;
-  width: 100%;
-  height: 20px;
+  width: 28px;
+  height: 48px;
   border: none;
-  border-radius: 10px;
+  border-radius: 14px;
   background: #3c4043;
   color: #e8eaed;
   display: flex;
@@ -196,30 +174,24 @@
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background-color 150ms ease;
-
-  .icon-chip {
-    inset: 2px;
-    border-radius: 6px;
-  }
+  transition: background-color 150ms ease, color 150ms ease;
 
   .material-symbols-outlined {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   &:hover {
     background: #4a4d51;
   }
 
+  // Muted state: the darker half of Meet's two-tone pair — sits next to the lighter
+  // .control-btn.off square (see above) instead of a single flat red fill.
   &.off {
-    background: #4a2426;
+    background: #442726;
+    color: #f6cfc9;
 
-    .icon-chip {
-      background: #ea4335;
-    }
-
-    &:hover .icon-chip {
-      background: #d33b2c;
+    &:hover {
+      background: #5a3230;
     }
   }
 
@@ -385,8 +357,9 @@
     }
   }
 
-  .pair-shape {
-    width: 44px;
+  .chevron-btn {
+    width: 26px;
+    height: 44px;
   }
 }
 
@@ -413,12 +386,9 @@
     }
   }
 
-  .pair-shape {
-    width: 38px;
-  }
-
   .chevron-btn {
-    height: 14px;
+    width: 22px;
+    height: 38px;
 
     .material-symbols-outlined {
       font-size: 12px;
