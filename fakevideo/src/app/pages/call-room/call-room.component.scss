@@ -435,15 +435,15 @@ app-video-tile {
 
 @keyframes teleport-flash {
   0%,
-  57% {
+  64% {
     opacity: 0;
     transform: scale(0.2);
   }
-  64% {
+  70% {
     opacity: 1;
     transform: scale(1.1);
   }
-  68% {
+  74% {
     opacity: 1;
     transform: scale(1.3);
   }
@@ -488,14 +488,14 @@ app-video-tile {
 
 @keyframes teleport-beam {
   0%,
-  18% {
+  17% {
     opacity: 0;
     transform: translate(-50%, -50%) rotate(0deg) scale(0.3);
   }
-  40% {
+  45% {
     opacity: 0.9;
   }
-  68% {
+  74% {
     opacity: 0.4;
     transform: translate(-50%, -50%) rotate(220deg) scale(1.6);
   }
@@ -518,21 +518,21 @@ app-video-tile {
 
 @keyframes teleport-scan {
   0%,
-  18% {
+  17% {
     opacity: 0;
     transform: translateY(-6%);
   }
-  30% {
+  35% {
     opacity: 0.9;
   }
   60% {
     opacity: 0.5;
     transform: translateY(3%);
   }
-  68% {
+  74% {
     opacity: 0.9;
   }
-  76% {
+  80% {
     opacity: 0;
     transform: translateY(8%);
   }
@@ -543,25 +543,25 @@ app-video-tile {
 
 @keyframes teleport-chromatic {
   0%,
-  18% {
+  17% {
     opacity: 0;
     transform: translateX(0);
   }
-  30% {
+  32% {
     opacity: 1;
     transform: translateX(-6px);
   }
-  42% {
+  46% {
     transform: translateX(6px);
   }
-  54% {
+  58% {
     transform: translateX(-4px);
   }
-  66% {
+  70% {
     opacity: 0.8;
     transform: translateX(3px);
   }
-  70% {
+  75% {
     opacity: 0;
     transform: translateX(0);
   }
@@ -586,16 +586,16 @@ app-video-tile {
 
 @keyframes teleport-blackout {
   0%,
-  67% {
+  73% {
     opacity: 0;
   }
-  68% {
+  74% {
     opacity: 1;
   }
-  82% {
+  86% {
     opacity: 1;
   }
-  92%,
+  94%,
   100% {
     opacity: 0;
   }
