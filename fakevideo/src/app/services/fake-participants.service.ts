@@ -10,6 +10,7 @@ interface FakeParticipant {
   clip: ClipInfo;
   room: Room;
   videoEl: HTMLVideoElement;
+  audioContext?: AudioContext;
   videoTrack: LocalTrack;
   audioTrack?: LocalTrack;
   cameraEnabled: boolean;
@@ -65,15 +66,34 @@ export class FakeParticipantsService {
     videoEl.loop = true;
     videoEl.preload = 'auto';
     videoEl.crossOrigin = 'anonymous';
-    videoEl.muted = false; // must stay unmuted for captureStream() to carry audio
+    // Always muted: this element exists only to feed captureStream()'s video track and, via the
+    // AudioContext graph below, the published audio track. It must never be heard directly out of
+    // this device's speakers — whoever added the clip already hears the fake participant through
+    // the normal remote-audio path (AudioOutputService), which does respect the mic mute state.
+    videoEl.muted = true;
     videoEl.style.display = 'none';
     document.body.appendChild(videoEl);
 
+    let audioContext: AudioContext | undefined;
     try {
       await videoEl.play();
       const captured = videoEl.captureStream(30);
       const videoMediaTrack = captured.getVideoTracks()[0];
-      const audioMediaTrack = captured.getAudioTracks()[0];
+
+      // The audio track is sourced from a Web Audio graph instead of captureStream(), and that
+      // graph is never connected to audioContext.destination — so this decouples the published
+      // track from local playback entirely, instead of relying on videoEl.muted (which, on some
+      // browsers, silences captureStream()'s audio too when the element itself is muted).
+      audioContext = new AudioContext();
+      // Browsers create AudioContext in a 'suspended' state unless a user gesture is already in
+      // progress; while suspended, the graph produces silence, which would mute the published
+      // track for everyone even though the fake participant is "on". add() is always called from
+      // the owner's click on the clips panel, so a gesture is available to resume it.
+      await audioContext.resume();
+      const source = audioContext.createMediaElementSource(videoEl);
+      const destination = audioContext.createMediaStreamDestination();
+      source.connect(destination);
+      const audioMediaTrack = destination.stream.getAudioTracks()[0];
 
       const videoPublication = await room.localParticipant.publishTrack(videoMediaTrack, {
         source: Track.Source.Camera
@@ -90,6 +110,7 @@ export class FakeParticipantsService {
           clip,
           room,
           videoEl,
+          audioContext,
           videoTrack: videoPublication.track!,
           audioTrack: audioPublication?.track,
           cameraEnabled: true,
@@ -97,6 +118,7 @@ export class FakeParticipantsService {
         }
       ]);
     } catch (err) {
+      void audioContext?.close();
       videoEl.remove();
       await room.disconnect();
       throw err;
@@ -139,6 +161,7 @@ export class FakeParticipantsService {
     entry.videoEl.removeAttribute('src');
     entry.videoEl.load();
     entry.videoEl.remove();
+    void entry.audioContext?.close();
   }
 
   async setMicEnabled(id: string, enabled: boolean): Promise<void> {
@@ -162,6 +185,7 @@ export class FakeParticipantsService {
       entry.videoEl.removeAttribute('src');
       entry.videoEl.load();
       entry.videoEl.remove();
+      void entry.audioContext?.close();
     });
     this.entries.set([]);
   }
