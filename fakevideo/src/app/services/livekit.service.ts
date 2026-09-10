@@ -8,9 +8,12 @@ import {
   Track,
   VideoPresets,
 } from 'livekit-client';
-import { ChatMessage, ParticipantView } from '../models/room-state';
+import { ChatMessage, ParticipantView, ReactionEvent } from '../models/room-state';
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected';
+
+/** How long a floating reaction stays on screen before it's pruned from the list. */
+const REACTION_LIFETIME_MS = 3000;
 
 @Injectable({ providedIn: 'root' })
 export class LivekitService {
@@ -18,6 +21,7 @@ export class LivekitService {
 
   readonly participants = signal<ParticipantView[]>([]);
   readonly chatMessages = signal<ChatMessage[]>([]);
+  readonly reactions = signal<ReactionEvent[]>([]);
   readonly connectionState = signal<ConnectionState>('disconnected');
   /** Bumped (never read for its value) whenever a teleport effect should play, be it locally triggered or received from the host. */
   readonly teleportPulse = signal(0);
@@ -131,6 +135,33 @@ export class LivekitService {
     void local.publishData(payload, { reliable: true, topic: 'chat' });
   }
 
+  /** Plays a floating emoji reaction locally and broadcasts it so everyone else sees it too. */
+  sendReaction(emoji: string): void {
+    const local = this.room?.localParticipant;
+    if (!local) return;
+
+    const event: ReactionEvent = {
+      id: crypto.randomUUID(),
+      emoji,
+      senderName: local.name || local.identity,
+      isLocal: true,
+      leftPercent: 10 + Math.random() * 20
+    };
+    this.addReaction(event);
+
+    const payload = new TextEncoder().encode(
+      JSON.stringify({ id: event.id, emoji: event.emoji, senderName: event.senderName })
+    );
+    void local.publishData(payload, { reliable: true, topic: 'reaction' });
+  }
+
+  private addReaction(event: ReactionEvent): void {
+    this.reactions.update((list) => [...list, event]);
+    setTimeout(() => {
+      this.reactions.update((list) => list.filter((r) => r.id !== event.id));
+    }, REACTION_LIFETIME_MS);
+  }
+
   /** Plays the teleport effect locally and broadcasts it so every other participant plays it too. */
   triggerTeleportEffect(): void {
     this.teleportPulse.update((n) => n + 1);
@@ -177,6 +208,19 @@ export class LivekitService {
       .on(RoomEvent.DataReceived, (payload, _participant, _kind, topic) => {
         if (topic === 'teleport') {
           this.teleportPulse.update((n) => n + 1);
+          return;
+        }
+        if (topic === 'reaction') {
+          try {
+            const received = JSON.parse(new TextDecoder().decode(payload)) as {
+              id: string;
+              emoji: string;
+              senderName: string;
+            };
+            this.addReaction({ ...received, isLocal: false, leftPercent: 10 + Math.random() * 20 });
+          } catch {
+            // ignore malformed reaction payloads
+          }
           return;
         }
         if (topic !== 'chat') return;

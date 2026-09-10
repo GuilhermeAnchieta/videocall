@@ -47,6 +47,20 @@ export class ControlsBarComponent implements OnDestroy {
   readonly toggleParticipants = output<void>();
   readonly toggleChat = output<void>();
   readonly triggerTeleport = output<void>();
+  readonly sendReaction = output<string>();
+
+  readonly REACTIONS = ['❤️', '👍', '🎉', '👏', '😂', '😮', '😢', '🤔', '👎'];
+  readonly reactionMenuOpen = signal(false);
+  private readonly reactionWrap = viewChild<ElementRef<HTMLElement>>('reactionWrap');
+
+  toggleReactionMenu(): void {
+    this.reactionMenuOpen.update((open) => !open);
+  }
+
+  pickReaction(emoji: string): void {
+    this.sendReaction.emit(emoji);
+    this.reactionMenuOpen.set(false);
+  }
 
   readonly confirmingLeave = signal(false);
   private confirmTimer?: ReturnType<typeof setTimeout>;
@@ -94,6 +108,7 @@ export class ControlsBarComponent implements OnDestroy {
     this.cancelTeleport();
     this.micMenuOpen.set(false);
     this.cameraMenuOpen.set(false);
+    this.reactionMenuOpen.set(false);
   }
 
   private readonly leaveWrap = viewChild<ElementRef<HTMLElement>>('leaveWrap');
@@ -114,6 +129,9 @@ export class ControlsBarComponent implements OnDestroy {
     }
     if (this.micMenuOpen() && !this.micWrap()?.nativeElement.contains(target)) {
       this.micMenuOpen.set(false);
+    }
+    if (this.reactionMenuOpen() && !this.reactionWrap()?.nativeElement.contains(target)) {
+      this.reactionMenuOpen.set(false);
     }
     if (this.cameraMenuOpen() && !this.cameraWrap()?.nativeElement.contains(target)) {
       this.cameraMenuOpen.set(false);
@@ -161,29 +179,47 @@ export class ControlsBarComponent implements OnDestroy {
     this.levelAudioContext = new AudioContext();
     const source = this.levelAudioContext.createMediaStreamSource(new MediaStream([mediaTrack]));
     const analyser = this.levelAudioContext.createAnalyser();
-    analyser.fftSize = 32;
-    analyser.smoothingTimeConstant = 0.6;
+    analyser.fftSize = 64;
+    analyser.smoothingTimeConstant = 0.7;
     source.connect(analyser);
     this.levelAnalyser = analyser;
 
     const data = new Uint8Array(analyser.frequencyBinCount);
-    // Byte values below this are treated as silence: this is what's captured by THIS device's
-    // own microphone (getLocalAudioTrack() is always the local mic, never a remote
-    // participant's), but without headphones a mic can still physically pick up other people's
-    // voices leaking out of this device's own speakers. A noise floor keeps that faint
-    // pickup from moving the bars — only a clearly louder, close-mic signal (the actual user
-    // speaking into it) does.
-    const NOISE_FLOOR = 55;
-    const bar = (i: number) => {
-      const raw = data[i] ?? 0;
-      if (raw < NOISE_FLOOR) return 0.15;
-      return 0.15 + Math.min(1, (raw - NOISE_FLOOR) / (210 - NOISE_FLOOR)) * 0.85;
-    };
+    // getLocalAudioTrack() is always THIS device's own mic — it can never be a remote
+    // participant's audio. But without headphones, this device's own speakers play that remote
+    // voice out loud, and this same mic physically picks that up again, which looks identical
+    // to an analyser. A single loudness threshold still lets that leak through, so this uses a
+    // Schmitt-trigger gate instead: the meter only turns on once the level clearly exceeds
+    // OPEN_THRESHOLD, and turns back off only once it drops below a lower CLOSE_THRESHOLD. That
+    // gap (instead of one shared cutoff) stops it from flickering on quieter, more distant
+    // sound like speaker leakage while still responding readily to someone speaking directly
+    // into the mic. It cannot fully replace using headphones when testing without them, since
+    // the leaked audio and real speech share the same physical microphone.
+    const OPEN_THRESHOLD = 85;
+    const CLOSE_THRESHOLD = 55;
+    let gateOpen = false;
+
     const loop = () => {
       analyser.getByteFrequencyData(data);
-      // Three different frequency bins instead of the same overall level three times, so the
-      // bars move a little independently of each other like Meet's, not in lockstep.
-      this.micLevels.set([bar(1), bar(3), bar(6)]);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) sum += data[i];
+      const avg = sum / data.length;
+
+      if (gateOpen) {
+        if (avg < CLOSE_THRESHOLD) gateOpen = false;
+      } else if (avg > OPEN_THRESHOLD) {
+        gateOpen = true;
+      }
+
+      if (!gateOpen) {
+        this.micLevels.set([0.15, 0.15, 0.15]);
+      } else {
+        const level = 0.15 + Math.min(1, (avg - CLOSE_THRESHOLD) / (210 - CLOSE_THRESHOLD)) * 0.85;
+        // Same level driving all 3 bars, with a per-bar multiplier for visual variety instead
+        // of arbitrary frequency bins (which were more prone to reacting to a narrow-band hum).
+        this.micLevels.set([level, level * 0.85 + 0.05, level * 0.7 + 0.08]);
+      }
+
       this.levelRafId = requestAnimationFrame(loop);
     };
     loop();

@@ -39,6 +39,7 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   readonly connectionState = this.livekit.connectionState;
   readonly audioPlaybackBlocked = this.audioOutput.playbackBlocked;
   readonly chatMessages = this.livekit.chatMessages;
+  readonly reactions = this.livekit.reactions;
   readonly roomCode = signal('');
   readonly errorMessage = signal<string | null>(null);
   readonly isOwner = signal(false);
@@ -222,6 +223,10 @@ export class CallRoomComponent implements OnInit, OnDestroy {
 
   sendChat(text: string): void {
     this.livekit.sendChatMessage(text);
+  }
+
+  sendReaction(emoji: string): void {
+    this.livekit.sendReaction(emoji);
   }
 
   toggleClipsPanel(): void {

@@ -58,6 +58,15 @@
         </div>
       }
 
+      <div class="reactions-layer" aria-hidden="true">
+        @for (reaction of reactions(); track reaction.id) {
+          <div class="reaction-bubble" [style.left.%]="reaction.leftPercent">
+            <span class="reaction-emoji">{{ reaction.emoji }}</span>
+            <span class="reaction-sender">{{ reaction.isLocal ? 'You' : reaction.senderName }}</span>
+          </div>
+        }
+      </div>
+
       @if (audioPlaybackBlocked()) {
         <button type="button" class="audio-unlock-banner" (click)="enableAudio()">
           <span class="material-symbols-outlined">volume_off</span>
@@ -147,5 +156,6 @@
     (toggleParticipants)="toggleParticipantsPanel()"
     (toggleChat)="toggleChatPanel()"
     (triggerTeleport)="triggerTeleport()"
+    (sendReaction)="sendReaction($event)"
   />
 </div>
