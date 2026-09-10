@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ClipLibraryService } from '../../services/clip-library.service';
 import { MediaSourceService } from '../../services/media-source.service';
 import { FakeParticipantsService } from '../../services/fake-participants.service';
-import { ClipInfo, MediaMode } from '../../models/room-state';
+import { ClipInfo } from '../../models/room-state';
 
 @Component({
   selector: 'app-clips-panel',
@@ -20,8 +20,6 @@ export class ClipsPanelComponent implements OnInit {
   readonly roomCode = input.required<string>();
   readonly close = output<void>();
 
-  readonly mode = this.mediaSource.mode;
-  readonly activeClip = this.mediaSource.activeClip;
   readonly fakeList = this.fakeParticipants.participantViews;
 
   readonly clips = signal<ClipInfo[]>([]);
@@ -44,30 +42,16 @@ export class ClipsPanelComponent implements OnInit {
     }
   }
 
-  isActiveClip(clip: ClipInfo, mode: MediaMode): boolean {
-    return mode === 'clip' && this.activeClip()?.id === clip.id;
-  }
-
-  async chooseCamera(): Promise<void> {
-    await this.mediaSource.switchToCamera();
-  }
-
-  async chooseMyClip(clip: ClipInfo): Promise<void> {
-    try {
-      await this.mediaSource.switchToClip(clip);
-    } catch {
-      this.errorMessage.set(`Could not play "${clip.name}".`);
-    }
-  }
-
   async addFakeParticipant(clip: ClipInfo): Promise<void> {
     const name = this.newFakeName().trim() || clip.name;
+    console.log('[clips-panel] addFakeParticipant clicked, clip=', clip.id, 'name=', name, 'at', Date.now());
     this.addingFakeClipId.set(clip.id);
     this.errorMessage.set(null);
     try {
       await this.fakeParticipants.add(this.roomCode(), clip, name);
       this.newFakeName.set('');
-    } catch {
+    } catch (err) {
+      console.log('[clips-panel] addFakeParticipant failed', err);
       this.errorMessage.set(`Could not add "${name}" as a fake participant.`);
     } finally {
       this.addingFakeClipId.set(null);

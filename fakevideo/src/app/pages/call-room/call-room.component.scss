@@ -170,11 +170,15 @@
  * participants are in the call or the screen shape of whoever's watching — a phone held
  * upright doesn't become a giant "portrait" tile, it stays a standard rectangle like the
  * others, just centered. auto-fit wraps and grows the grid as needed.
+ *
+ * The min track size is pinned to ~1/3 of the row (via max() with an absolute floor) so at
+ * most 3 tiles ever share a row — a 4th participant can't squeeze in beside the first 3, it
+ * wraps to the row below instead.
  */
 .video-grid {
   height: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(max(240px, calc(33.333% - 16px)), 1fr));
   grid-auto-rows: min-content;
   align-content: center;
   justify-content: center;
@@ -193,7 +197,7 @@ app-video-tile {
 
 @media (max-width: 700px) {
   .video-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(max(150px, calc(50% - 10px)), 1fr));
     gap: 10px;
   }
 }

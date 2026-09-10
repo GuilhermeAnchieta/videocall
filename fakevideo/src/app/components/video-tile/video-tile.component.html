@@ -14,12 +14,6 @@
     </div>
   }
 
-  @if (participant().isLocal && participant().usingClip) {
-    <div class="clip-badge" title="Playing a recorded clip (visible only to you)">
-      <span class="material-symbols-outlined">movie</span>
-    </div>
-  }
-
   @if (isOwner() && participant().isFake) {
     <div class="fake-badge" title="Fake participant (visible only to you)">
       <span class="material-symbols-outlined">smart_toy</span>

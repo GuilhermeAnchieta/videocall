@@ -39,23 +39,27 @@ export class FakeParticipantsService {
       cameraEnabled: entry.cameraEnabled,
       micEnabled: entry.micEnabled,
       isSpeaking: false,
-      usingClip: false,
       isFake: true,
-      fakeId: entry.id
-    }))
+      fakeId: entry.id,
+    })),
   );
 
   async add(roomCode: string, clip: ClipInfo, name: string): Promise<void> {
-    const { token, livekitUrl } = await this.roomService.getAccessToken(roomCode, name);
+    const { token, livekitUrl } = await this.roomService.getAccessToken(
+      roomCode,
+      name,
+    );
 
     const room = new Room({
       adaptiveStream: true,
       dynacast: true,
-      publishDefaults: { simulcast: true, dtx: true, red: true }
+      publishDefaults: { simulcast: true, dtx: true, red: true },
     });
 
     const id = crypto.randomUUID();
+    console.log('[fake] add() starting, id=', id, 'name=', name);
     room.once(RoomEvent.Disconnected, () => {
+      console.log('[fake] Disconnected event, removing from entries, id=', id);
       this.entries.update((list) => list.filter((entry) => entry.id !== id));
     });
 
@@ -95,11 +99,16 @@ export class FakeParticipantsService {
       source.connect(destination);
       const audioMediaTrack = destination.stream.getAudioTracks()[0];
 
-      const videoPublication = await room.localParticipant.publishTrack(videoMediaTrack, {
-        source: Track.Source.Camera
-      });
+      const videoPublication = await room.localParticipant.publishTrack(
+        videoMediaTrack,
+        {
+          source: Track.Source.Camera,
+        },
+      );
       const audioPublication = audioMediaTrack
-        ? await room.localParticipant.publishTrack(audioMediaTrack, { source: Track.Source.Microphone })
+        ? await room.localParticipant.publishTrack(audioMediaTrack, {
+            source: Track.Source.Microphone,
+          })
         : undefined;
 
       this.entries.update((list) => [
@@ -114,10 +123,17 @@ export class FakeParticipantsService {
           videoTrack: videoPublication.track!,
           audioTrack: audioPublication?.track,
           cameraEnabled: true,
-          micEnabled: true
-        }
+          micEnabled: true,
+        },
       ]);
+      console.log(
+        '[fake] add() succeeded, id=',
+        id,
+        'entries now=',
+        this.entries().map((e) => e.id),
+      );
     } catch (err) {
+      console.log('[fake] add() failed, id=', id, err);
       void audioContext?.close();
       videoEl.remove();
       await room.disconnect();
@@ -144,14 +160,20 @@ export class FakeParticipantsService {
   /** Removes only the given fake participants — used by the teleport effect so a clip added
    * during the drop delay isn't swept away by a removal that was scheduled before it existed. */
   async removeMany(ids: ReadonlySet<string>): Promise<void> {
-    await Promise.all(
-      this.entries()
-        .filter((entry) => ids.has(entry.id))
-        .map((entry) => this.remove(entry.id))
+    const matching = this.entries().filter((entry) => ids.has(entry.id));
+    console.log(
+      '[fake] removeMany called with ids=',
+      [...ids],
+      'current entries=',
+      this.entries().map((e) => e.id),
+      'matching to remove=',
+      matching.map((e) => e.id),
     );
+    await Promise.all(matching.map((entry) => this.remove(entry.id)));
   }
 
   async remove(id: string): Promise<void> {
+    console.trace('[fake] remove() called for id=', id);
     const entry = this.entries().find((e) => e.id === id);
     if (!entry) return;
 
@@ -168,14 +190,18 @@ export class FakeParticipantsService {
     const entry = this.entries().find((e) => e.id === id);
     if (!entry) return;
     await entry.room.localParticipant.setMicrophoneEnabled(enabled);
-    this.entries.update((list) => list.map((e) => (e.id === id ? { ...e, micEnabled: enabled } : e)));
+    this.entries.update((list) =>
+      list.map((e) => (e.id === id ? { ...e, micEnabled: enabled } : e)),
+    );
   }
 
   async setCameraEnabled(id: string, enabled: boolean): Promise<void> {
     const entry = this.entries().find((e) => e.id === id);
     if (!entry) return;
     await entry.room.localParticipant.setCameraEnabled(enabled);
-    this.entries.update((list) => list.map((e) => (e.id === id ? { ...e, cameraEnabled: enabled } : e)));
+    this.entries.update((list) =>
+      list.map((e) => (e.id === id ? { ...e, cameraEnabled: enabled } : e)),
+    );
   }
 
   dispose(): void {

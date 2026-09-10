@@ -61,6 +61,7 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     const teleportBaseline = this.livekit.teleportPulse();
     effect((onCleanup) => {
       const pulse = this.livekit.teleportPulse();
+      console.log('[teleport] effect pulse=', pulse, 'baseline=', teleportBaseline);
       if (pulse <= teleportBaseline) return;
       this.playTeleportEffect();
       onCleanup(() => {
@@ -71,23 +72,18 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   }
 
   readonly displayParticipants = computed<ParticipantView[]>(() => {
-    const usingClip = this.mediaSource.mode() === 'clip';
     const fakeViews = this.fakeParticipants.participantViews();
     // On the owner's side, the main connection also sees each bot as a regular remote
     // participant (it's a real LiveKit connection); discard that "raw" version to avoid
     // duplicating the tile and use the version with isFake/fakeId instead (hover controls).
     const fakeIdentities = new Set(fakeViews.map((f) => f.identity));
-    const real = this.livekit
-      .participants()
-      .filter((p) => !fakeIdentities.has(p.identity))
-      .map((p) => (p.isLocal ? { ...p, usingClip } : p));
+    const real = this.livekit.participants().filter((p) => !fakeIdentities.has(p.identity));
     return [...real, ...fakeViews];
   });
 
   readonly localParticipant = computed(() => this.displayParticipants().find((p) => p.isLocal));
   readonly micEnabled = computed(() => this.localParticipant()?.micEnabled ?? false);
   readonly cameraEnabled = computed(() => this.localParticipant()?.cameraEnabled ?? false);
-  readonly usingClip = computed(() => this.localParticipant()?.usingClip ?? false);
 
   readonly participantsCount = computed(() => this.displayParticipants().length);
 
@@ -253,6 +249,7 @@ export class CallRoomComponent implements OnInit, OnDestroy {
    * with freezing and dropping them.
    */
   private playTeleportEffect(): void {
+    console.log('[teleport] playTeleportEffect fired, isOwner=', this.isOwner());
     this.teleportActive.set(true);
     clearTimeout(this.teleportEffectTimer);
     this.teleportEffectTimer = setTimeout(
@@ -265,11 +262,13 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     // Snapshot who's here right now: a clip added during the drop delay below must not be
     // swept away by a removal that was scheduled before it even existed.
     const idsAtTrigger = new Set(this.fakeParticipants.participantViews().map((p) => p.fakeId!));
+    console.log('[teleport] snapshot idsAtTrigger=', [...idsAtTrigger]);
     this.fakeParticipants.freezeMany(idsAtTrigger);
     this.frozenFakeIds.set(idsAtTrigger);
 
     clearTimeout(this.teleportDropTimer);
     this.teleportDropTimer = setTimeout(async () => {
+      console.log('[teleport] drop timer firing, removing ids=', [...idsAtTrigger]);
       await this.fakeParticipants.removeMany(idsAtTrigger);
       this.frozenFakeIds.set(new Set());
     }, CallRoomComponent.TELEPORT_EFFECT_DURATION + CallRoomComponent.TELEPORT_DROP_DELAY);
