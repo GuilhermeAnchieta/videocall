@@ -100,7 +100,7 @@
           <span>Teleport all clips out of the call?</span>
           <div class="leave-confirm-actions">
             <button type="button" class="cancel-btn" (click)="cancelTeleport()">Cancel</button>
-            <button type="button" class="confirm-btn" (click)="confirmTeleport()">Teleport</button>
+            <button type="button" class="confirm-btn" (click)="confirmTeleport($event)">Teleport</button>
           </div>
         </div>
       }
@@ -109,7 +109,7 @@
         class="control-btn"
         [class.armed]="confirmingTeleport()"
         title="Teleport (makes every clip freeze and drop from the call)"
-        (click)="requestTeleport()"
+        (click)="requestTeleport($event)"
       >
         <span class="material-symbols-outlined">bolt</span>
       </button>
