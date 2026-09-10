@@ -20,6 +20,9 @@ export class LivekitService {
 
   async connect(url: string, token: string): Promise<void> {
     this.connectionState.set('connecting');
+    // teleportPulse is a service-wide signal that outlives a single call — reset it so a
+    // teleport played in a previous room doesn't replay itself the instant this one mounts.
+    this.teleportPulse.set(0);
     const room = new Room({
       adaptiveStream: true,
       dynacast: true,

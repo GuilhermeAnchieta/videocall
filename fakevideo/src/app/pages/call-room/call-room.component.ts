@@ -47,15 +47,21 @@ export class CallRoomComponent implements OnInit, OnDestroy {
 
   readonly teleportActive = signal(false);
   readonly frozenFakeIds = signal<ReadonlySet<string>>(new Set());
-  private static readonly TELEPORT_EFFECT_DURATION = 1400;
+  readonly teleportParticles = Array.from({ length: 24 }, (_, i) => i);
+  private static readonly TELEPORT_EFFECT_DURATION = 1800;
   private static readonly TELEPORT_DROP_DELAY = 900;
   private teleportEffectTimer?: ReturnType<typeof setTimeout>;
   private teleportDropTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
+    // Baseline captured at construction time, not a hardcoded 0: teleportPulse is a
+    // service-wide signal that can already be non-zero from a previous room in this
+    // session, and we only want to react to a pulse that happens from here on (a real
+    // click on the teleport button), not replay a stale one on mount.
+    const teleportBaseline = this.livekit.teleportPulse();
     effect((onCleanup) => {
       const pulse = this.livekit.teleportPulse();
-      if (pulse === 0) return;
+      if (pulse <= teleportBaseline) return;
       this.playTeleportEffect();
       onCleanup(() => {
         clearTimeout(this.teleportEffectTimer);
