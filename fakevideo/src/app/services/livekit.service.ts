@@ -73,7 +73,6 @@ export class LivekitService {
       micEnabled ? room.localParticipant.setMicrophoneEnabled(true) : undefined,
       cameraEnabled ? room.localParticipant.setCameraEnabled(true) : undefined,
     ]);
-    if (micEnabled) await this.applyNoiseFilter();
     this.sync();
   }
 
