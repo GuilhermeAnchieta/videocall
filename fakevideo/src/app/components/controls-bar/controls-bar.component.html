@@ -2,12 +2,21 @@
   <div class="bar-pill">
     <div class="control-pair" #micWrap>
       @if (micMenuOpen()) {
-        <div class="device-menu" role="dialog" aria-label="Choose microphone and speaker">
+        <div
+          class="device-menu"
+          role="dialog"
+          aria-label="Choose microphone and speaker"
+        >
           <label class="device-field">
             <span class="material-symbols-outlined">mic</span>
-            <select [ngModel]="selectedMicId()" (ngModelChange)="onMicSelected($event)">
+            <select
+              [ngModel]="selectedMicId()"
+              (ngModelChange)="onMicSelected($event)"
+            >
               @for (mic of microphones(); track mic.deviceId) {
-                <option [value]="mic.deviceId">{{ mic.label || 'Microphone' }}</option>
+                <option [value]="mic.deviceId">
+                  {{ mic.label || "Microphone" }}
+                </option>
               }
             </select>
           </label>
@@ -15,13 +24,20 @@
           <label class="device-field">
             <span class="material-symbols-outlined">volume_up</span>
             @if (sinkIdSupported) {
-              <select [ngModel]="selectedSpeakerId()" (ngModelChange)="onSpeakerSelected($event)">
+              <select
+                [ngModel]="selectedSpeakerId()"
+                (ngModelChange)="onSpeakerSelected($event)"
+              >
                 @for (speaker of speakers(); track speaker.deviceId) {
-                  <option [value]="speaker.deviceId">{{ speaker.label || 'Speaker' }}</option>
+                  <option [value]="speaker.deviceId">
+                    {{ speaker.label || "Speaker" }}
+                  </option>
                 }
               </select>
             } @else {
-              <span class="hint">Your browser doesn't support changing audio output.</span>
+              <span class="hint"
+                >Your browser doesn't support changing audio output.</span
+              >
             }
           </label>
         </div>
@@ -45,7 +61,9 @@
           [title]="micEnabled() ? 'Turn off microphone' : 'Turn on microphone'"
           (click)="toggleMic.emit()"
         >
-          <span class="material-symbols-outlined">{{ micEnabled() ? 'mic' : 'mic_off' }}</span>
+          <span class="material-symbols-outlined">{{
+            micEnabled() ? "mic" : "mic_off"
+          }}</span>
         </button>
       </div>
     </div>
@@ -56,9 +74,14 @@
           <label class="device-field">
             <span class="material-symbols-outlined">videocam</span>
             @if (cameras().length > 0) {
-              <select [ngModel]="selectedCameraId()" (ngModelChange)="onCameraSelected($event)">
+              <select
+                [ngModel]="selectedCameraId()"
+                (ngModelChange)="onCameraSelected($event)"
+              >
                 @for (cam of cameras(); track cam.deviceId) {
-                  <option [value]="cam.deviceId">{{ cam.label || 'Camera' }}</option>
+                  <option [value]="cam.deviceId">
+                    {{ cam.label || "Camera" }}
+                  </option>
                 }
               </select>
             } @else {
@@ -86,7 +109,9 @@
           [title]="cameraEnabled() ? 'Turn off camera' : 'Turn on camera'"
           (click)="toggleCamera.emit()"
         >
-          <span class="material-symbols-outlined">{{ cameraEnabled() ? 'videocam' : 'videocam_off' }}</span>
+          <span class="material-symbols-outlined">{{
+            cameraEnabled() ? "videocam" : "videocam_off"
+          }}</span>
         </button>
       </div>
     </div>
@@ -103,11 +128,27 @@
 
       <div class="teleport-wrap" #teleportWrap>
         @if (confirmingTeleport()) {
-          <div class="confirm-popover" role="dialog" aria-label="Confirm teleport">
+          <div
+            class="confirm-popover"
+            role="dialog"
+            aria-label="Confirm teleport"
+          >
             <span>Teleport all clips out of the call?</span>
             <div class="leave-confirm-actions">
-              <button type="button" class="cancel-btn" (click)="cancelTeleport()">Cancel</button>
-              <button type="button" class="confirm-btn" (click)="confirmTeleport()">Teleport</button>
+              <button
+                type="button"
+                class="cancel-btn"
+                (click)="cancelTeleport()"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="confirm-btn"
+                (click)="confirmTeleport($event)"
+              >
+                Teleport
+              </button>
             </div>
           </div>
         }
@@ -125,11 +166,19 @@
 
     <div class="leave-wrap" #leaveWrap>
       @if (confirmingLeave()) {
-        <div class="confirm-popover" role="dialog" aria-label="Confirm leaving the call">
+        <div
+          class="confirm-popover"
+          role="dialog"
+          aria-label="Confirm leaving the call"
+        >
           <span>Leave the call?</span>
           <div class="leave-confirm-actions">
-            <button type="button" class="cancel-btn" (click)="cancelLeave()">Cancel</button>
-            <button type="button" class="confirm-btn" (click)="confirmLeave()">Leave</button>
+            <button type="button" class="cancel-btn" (click)="cancelLeave()">
+              Cancel
+            </button>
+            <button type="button" class="confirm-btn" (click)="confirmLeave()">
+              Leave
+            </button>
           </div>
         </div>
       }

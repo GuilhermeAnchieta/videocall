@@ -68,10 +68,26 @@ export class ControlsBarComponent {
 
   readonly confirmingTeleport = signal(false);
   private teleportConfirmTimer?: ReturnType<typeof setTimeout>;
+  private teleportRequestedAt = 0;
+  // Guards against a single physical gesture (ghost click, touch+synthetic click replay)
+  // firing both requestTeleport() and confirmTeleport() back to back: a real human needs
+  // at least this long to see the popover animate in (150ms) and move the pointer to "Confirm".
+  private static readonly MIN_CONFIRM_DELAY_MS = 250;
 
-  requestTeleport(): void {
+  requestTeleport(event?: Event): void {
+    console.log(
+      '[teleport-ui] requestTeleport, isTrusted=',
+      (event as PointerEvent | undefined)?.isTrusted,
+      'type=',
+      event?.type,
+      'target=',
+      (event?.target as HTMLElement | undefined)?.outerHTML?.slice(0, 120),
+      'at',
+      Date.now()
+    );
     if (this.confirmingTeleport()) return;
     this.confirmingTeleport.set(true);
+    this.teleportRequestedAt = Date.now();
     this.teleportConfirmTimer = setTimeout(() => this.confirmingTeleport.set(false), 4000);
   }
 
@@ -80,7 +96,25 @@ export class ControlsBarComponent {
     this.confirmingTeleport.set(false);
   }
 
-  confirmTeleport(): void {
+  confirmTeleport(event?: Event): void {
+    const elapsedSinceRequest = Date.now() - this.teleportRequestedAt;
+    console.log(
+      '[teleport-ui] confirmTeleport, isTrusted=',
+      (event as PointerEvent | undefined)?.isTrusted,
+      'type=',
+      event?.type,
+      'target=',
+      (event?.target as HTMLElement | undefined)?.outerHTML?.slice(0, 120),
+      'elapsedSinceRequest=',
+      elapsedSinceRequest
+    );
+    if (elapsedSinceRequest < ControlsBarComponent.MIN_CONFIRM_DELAY_MS) {
+      console.warn(
+        '[teleport-ui] confirmTeleport ignored — fired too soon after requestTeleport (likely a ghost/duplicate event), elapsedSinceRequest=',
+        elapsedSinceRequest
+      );
+      return;
+    }
     clearTimeout(this.teleportConfirmTimer);
     this.confirmingTeleport.set(false);
     this.triggerTeleport.emit();
