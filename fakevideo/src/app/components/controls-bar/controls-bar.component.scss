@@ -26,8 +26,8 @@
 .bar-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px;
+  gap: 4px;
+  padding: 4px;
   border-radius: 28px;
   background: #202124;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
@@ -174,7 +174,7 @@
 }
 
 .chevron-btn {
-  width: 28px;
+  width: 30px;
   height: 100%;
   border: none;
   background: transparent;
@@ -204,6 +204,25 @@
   color: #f6cfc9;
 }
 
+// Replaces the chevron icon while the mic is on: 3 little bars whose height tracks live
+// input level (see ControlsBarComponent.micLevels), like Meet's mic button.
+.audio-bars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 60%;
+}
+
+.audio-bar {
+  width: 3px;
+  height: 15%;
+  border-radius: 2px;
+  background: #8ab4f8;
+  transition: height 100ms ease;
+}
+
 // The icon "chip": inset from the shared pair-shape background on every side, so the
 // background shows through as a frame around it — like the icon floating on top of the
 // shared shape instead of owning the full-height/width slot next to the chevron.
@@ -212,7 +231,7 @@
   flex: 1;
   height: auto;
   align-self: stretch;
-  margin: 4px;
+  margin: 3px;
   border-radius: 12px;
   background: transparent;
 
