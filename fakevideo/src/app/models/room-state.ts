@@ -38,3 +38,13 @@ export interface JoinDetails {
   roomCode: string;
   displayName: string;
 }
+
+/** A transient emoji reaction (Meet-style) that floats over the video and disappears. */
+export interface ReactionEvent {
+  id: string;
+  emoji: string;
+  senderName: string;
+  isLocal: boolean;
+  /** Horizontal position (0-100, % of the stage width) so simultaneous reactions don't stack exactly on top of each other. */
+  leftPercent: number;
+}

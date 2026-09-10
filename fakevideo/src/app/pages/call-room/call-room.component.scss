@@ -202,6 +202,61 @@ app-video-tile {
   }
 }
 
+// Floating emoji reactions (Meet-style): each bubble rises from near the bottom-left of the
+// stage and fades out over REACTION_LIFETIME_MS (see livekit.service.ts), then is pruned from
+// the list — this layer just renders whatever's currently in it.
+.reactions-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.reaction-bubble {
+  position: absolute;
+  bottom: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: reaction-float 3000ms ease-out forwards;
+}
+
+.reaction-emoji {
+  font-size: 34px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.reaction-sender {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #8ab4f8;
+  color: #202124;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@keyframes reaction-float {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(-20px) scale(1);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-220px) scale(1);
+    opacity: 0;
+  }
+}
+
 .audio-unlock-banner {
   position: absolute;
   top: calc(16px + env(safe-area-inset-top, 0px));

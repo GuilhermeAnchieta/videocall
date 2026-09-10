@@ -126,9 +126,26 @@
       <span class="material-symbols-outlined">screen_share</span>
     </button>
 
-    <button type="button" class="control-btn" title="Reações">
-      <span class="material-symbols-outlined">mood</span>
-    </button>
+    <div class="reaction-wrap" #reactionWrap>
+      @if (reactionMenuOpen()) {
+        <div class="reaction-picker" role="dialog" aria-label="Send a reaction">
+          @for (emoji of REACTIONS; track emoji) {
+            <button type="button" class="reaction-option" (click)="pickReaction(emoji)">
+              {{ emoji }}
+            </button>
+          }
+        </div>
+      }
+      <button
+        type="button"
+        class="control-btn"
+        [class.active]="reactionMenuOpen()"
+        title="Reações"
+        (click)="toggleReactionMenu()"
+      >
+        <span class="material-symbols-outlined">mood</span>
+      </button>
+    </div>
 
     <button type="button" class="control-btn" title="Legendas">
       <span class="material-symbols-outlined">closed_caption</span>
