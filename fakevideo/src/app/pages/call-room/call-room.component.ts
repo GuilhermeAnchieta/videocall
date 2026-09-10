@@ -10,6 +10,7 @@ import { MediaSourceService } from '../../services/media-source.service';
 import { FakeParticipantsService } from '../../services/fake-participants.service';
 import { RoomService } from '../../services/room.service';
 import { AudioOutputService } from '../../services/audio-output.service';
+import { TeleportSoundService } from '../../services/teleport-sound.service';
 import { ParticipantView } from '../../models/room-state';
 
 @Component({
@@ -33,6 +34,7 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   private readonly mediaSource = inject(MediaSourceService);
   private readonly fakeParticipants = inject(FakeParticipantsService);
   private readonly audioOutput = inject(AudioOutputService);
+  private readonly teleportSound = inject(TeleportSoundService);
 
   readonly connectionState = this.livekit.connectionState;
   readonly audioPlaybackBlocked = this.audioOutput.playbackBlocked;
@@ -48,10 +50,36 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   readonly teleportActive = signal(false);
   readonly frozenFakeIds = signal<ReadonlySet<string>>(new Set());
   readonly teleportParticles = Array.from({ length: 24 }, (_, i) => i);
-  private static readonly TELEPORT_EFFECT_DURATION = 1800;
-  private static readonly TELEPORT_DROP_DELAY = 900;
+
+  /**
+   * Phase boundaries (ms from trigger) for the "vortex teleport" effect, mirrored in
+   * call-room.component.scss (keyframe percentages / animation-delay values, all computed
+   * against TELEPORT_EFFECT_DURATION below) and in teleport-sound.service.ts (audio
+   * scheduled off ctx.currentTime with the same numbers). Keep all three in sync:
+   *   0                    -> TELEPORT_PHASE_SHAKE_END      : initial shake, vignette closing in
+   *   TELEPORT_PHASE_SHAKE_END -> TELEPORT_PHASE_VORTEX_END : vortex distortion, tiles get sucked in
+   *   TELEPORT_PHASE_VORTEX_END -> TELEPORT_PHASE_FLASH_END : convergence + white flash
+   *   TELEPORT_PHASE_FLASH_END -> TELEPORT_PHASE_BLACKOUT_END : hard cut to black (bots dropped here)
+   *   TELEPORT_PHASE_BLACKOUT_END -> TELEPORT_EFFECT_DURATION : fade back in
+   */
+  private static readonly TELEPORT_PHASE_SHAKE_END = 500;
+  private static readonly TELEPORT_PHASE_VORTEX_END = 1600;
+  private static readonly TELEPORT_PHASE_FLASH_END = 1900;
+  private static readonly TELEPORT_PHASE_BLACKOUT_END = 2300;
+  private static readonly TELEPORT_EFFECT_DURATION = 2800;
+  /** Exactly mid-blackout (between FLASH_END and BLACKOUT_END) so nobody sees the bots vanish. */
+  private static readonly TELEPORT_DROP_AT = 2100;
   private teleportEffectTimer?: ReturnType<typeof setTimeout>;
   private teleportDropTimer?: ReturnType<typeof setTimeout>;
+
+  // Exposed as CSS custom properties (see the [style.--teleport-*] bindings in the template)
+  // so the SCSS animation-delay/duration values that depend on phase boundaries read from a
+  // single source of truth instead of hardcoded numbers that can drift out of sync.
+  readonly teleportShakeEnd = CallRoomComponent.TELEPORT_PHASE_SHAKE_END;
+  readonly teleportVortexEnd = CallRoomComponent.TELEPORT_PHASE_VORTEX_END;
+  readonly teleportFlashEnd = CallRoomComponent.TELEPORT_PHASE_FLASH_END;
+  readonly teleportBlackoutEnd = CallRoomComponent.TELEPORT_PHASE_BLACKOUT_END;
+  readonly teleportDuration = CallRoomComponent.TELEPORT_EFFECT_DURATION;
 
   constructor() {
     // Baseline captured at construction time, not a hardcoded 0: teleportPulse is a
@@ -255,6 +283,7 @@ export class CallRoomComponent implements OnInit, OnDestroy {
    */
   private playTeleportEffect(): void {
     this.teleportActive.set(true);
+    this.teleportSound.play();
     clearTimeout(this.teleportEffectTimer);
     this.teleportEffectTimer = setTimeout(
       () => this.teleportActive.set(false),
@@ -270,9 +299,11 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     this.frozenFakeIds.set(idsAtTrigger);
 
     clearTimeout(this.teleportDropTimer);
+    // Fires mid-blackout (TELEPORT_DROP_AT), while the screen is fully black, so the bots'
+    // removal never causes a visible "pop" in the grid.
     this.teleportDropTimer = setTimeout(async () => {
       await this.fakeParticipants.removeMany(idsAtTrigger);
       this.frozenFakeIds.set(new Set());
-    }, CallRoomComponent.TELEPORT_EFFECT_DURATION + CallRoomComponent.TELEPORT_DROP_DELAY);
+    }, CallRoomComponent.TELEPORT_DROP_AT);
   }
 }

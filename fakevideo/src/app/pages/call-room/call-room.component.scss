@@ -230,6 +230,21 @@ app-video-tile {
   }
 }
 
+/*
+ * "Vortex teleport" effect. Phase boundaries below are passed in from the component as CSS
+ * custom properties (--teleport-shake-end, --teleport-vortex-end, --teleport-flash-end,
+ * --teleport-blackout-end, --teleport-duration — see CallRoomComponent.TELEPORT_PHASE_*) so
+ * every animation-delay/duration here reads from the same source of truth the TS timers use.
+ * Keyframe *shapes* (the percentages inside each @keyframes block) can't take CSS variables,
+ * so those stay hand-tuned fractions of the animation's own duration — only the absolute
+ * delay/duration each animation runs for is wired to the shared phase constants.
+ *
+ * Timeline: shake (screen tremor) -> vortex (SVG turbulence distortion + tiles spinning/
+ * shrinking toward center + converging particles/streaks) -> flash (white burst) -> blackout
+ * (hard cut to black — this is when the fake participants actually get removed, see
+ * TELEPORT_DROP_AT in call-room.component.ts) -> reappear (fade back into the call).
+ */
+
 .teleport-overlay {
   position: absolute;
   inset: 0;
@@ -239,15 +254,64 @@ app-video-tile {
   perspective: 600px;
 }
 
+.teleport-vortex-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
 .video-grid.teleport-shake {
-  animation: teleport-shake 1800ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  animation: teleport-shake var(--teleport-shake-end, 500ms) cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+// Liquid-swirl distortion of the whole grid via an animated SVG feTurbulence/feDisplacementMap
+// filter (see the <svg><filter id="teleport-vortex-filter"> in the template) — cheap enough to
+// run on mobile, unlike a per-pixel canvas/WebGL approach.
+.video-grid.teleport-vortex {
+  filter: url(#teleport-vortex-filter);
+}
+
+.teleport-tile {
+  transform-origin: center center;
+}
+
+// Each tile spins on its own axis, shrinks, and fades out — "sucked" toward the vortex core —
+// during the vortex phase, then fades back in during the reappear phase. A small per-index
+// stagger (--tile-i) keeps the convergence from looking perfectly mechanical.
+.teleport-tile.teleport-converge {
+  animation:
+    teleport-tile-converge calc(var(--teleport-vortex-end, 1600ms) - var(--teleport-shake-end, 500ms))
+      cubic-bezier(0.61, -0.02, 0.85, 0.6) forwards,
+    teleport-tile-reappear calc(var(--teleport-duration, 2800ms) - var(--teleport-blackout-end, 2300ms))
+      ease-out forwards;
+  animation-delay:
+    calc(var(--teleport-shake-end, 500ms) + var(--tile-i, 0) * 12ms),
+    var(--teleport-blackout-end, 2300ms);
+  will-change: transform, opacity, filter;
 }
 
 .teleport-vignette {
   position: absolute;
   inset: -5%;
-  background: radial-gradient(circle at center, rgba(201, 226, 255, 0) 40%, rgba(6, 12, 30, 0.85) 100%);
-  animation: teleport-vignette 1800ms ease-in-out;
+  background: radial-gradient(circle at center, rgba(201, 226, 255, 0) 35%, rgba(6, 12, 30, 0.92) 100%);
+  animation: teleport-vignette var(--teleport-flash-end, 1900ms) ease-in-out both;
+}
+
+// Radial "speed lines" that shrink toward the center in step with the vortex, giving a cheap
+// sensation of motion blur without duplicating tile content.
+.teleport-motion-streaks {
+  position: absolute;
+  inset: -25%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.3) 0deg 1deg,
+    transparent 1deg 9deg
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: teleport-motion-streaks
+    calc(var(--teleport-vortex-end, 1600ms) - var(--teleport-shake-end, 500ms)) ease-in forwards;
+  animation-delay: var(--teleport-shake-end, 500ms);
 }
 
 .teleport-flash {
@@ -256,12 +320,13 @@ app-video-tile {
   background: radial-gradient(
     circle at center,
     #ffffff 0%,
-    #c9e2ff 12%,
-    #6ea8fe 32%,
+    #c9e2ff 14%,
+    #6ea8fe 34%,
     rgba(110, 168, 254, 0) 70%
   );
   mix-blend-mode: screen;
-  animation: teleport-flash 1800ms cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0;
+  animation: teleport-flash var(--teleport-duration, 2800ms) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .teleport-beam {
@@ -277,7 +342,7 @@ app-video-tile {
     rgba(201, 226, 255, 0) 4deg 16deg
   );
   mix-blend-mode: screen;
-  animation: teleport-beam 1800ms ease-out;
+  animation: teleport-beam var(--teleport-duration, 2800ms) ease-out both;
 }
 
 .teleport-ring {
@@ -291,19 +356,20 @@ app-video-tile {
   border: 3px solid rgba(201, 226, 255, 0.9);
   box-shadow: 0 0 24px 4px rgba(110, 168, 254, 0.6);
   opacity: 0;
-  animation: teleport-ring 1500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: teleport-ring calc(var(--teleport-flash-end, 1900ms) - var(--teleport-shake-end, 500ms))
+    cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .teleport-ring--1 {
-  animation-delay: 0ms;
+  animation-delay: var(--teleport-shake-end, 500ms);
 }
 
 .teleport-ring--2 {
-  animation-delay: 120ms;
+  animation-delay: calc(var(--teleport-shake-end, 500ms) + 120ms);
 }
 
 .teleport-ring--3 {
-  animation-delay: 260ms;
+  animation-delay: calc(var(--teleport-shake-end, 500ms) + 260ms);
 }
 
 .teleport-scanlines {
@@ -317,7 +383,7 @@ app-video-tile {
     transparent 6px
   );
   mix-blend-mode: screen;
-  animation: teleport-scan 1800ms ease-in-out;
+  animation: teleport-scan var(--teleport-duration, 2800ms) ease-in-out both;
 }
 
 .teleport-chromatic {
@@ -327,7 +393,7 @@ app-video-tile {
   background:
     linear-gradient(90deg, rgba(255, 0, 90, 0.35) 0%, rgba(255, 0, 90, 0) 2%),
     linear-gradient(90deg, rgba(0, 200, 255, 0) 98%, rgba(0, 200, 255, 0.35) 100%);
-  animation: teleport-chromatic 1800ms steps(12, end);
+  animation: teleport-chromatic var(--teleport-duration, 2800ms) steps(16, end) both;
 }
 
 .teleport-particles {
@@ -338,6 +404,7 @@ app-video-tile {
   height: 0;
 }
 
+// Particles converge inward (toward the vortex core) instead of expanding outward.
 .teleport-particle {
   position: absolute;
   left: 0;
@@ -350,26 +417,39 @@ app-video-tile {
   box-shadow: 0 0 10px 2px rgba(110, 168, 254, 0.9);
   opacity: 0;
   transform: rotate(calc(var(--i) * 15deg));
-  animation: teleport-particle 1400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: calc(var(--i) * 12ms);
+  animation: teleport-particle calc(var(--teleport-flash-end, 1900ms) - var(--teleport-shake-end, 500ms))
+    cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--teleport-shake-end, 500ms) + var(--i) * 12ms);
+}
+
+// Opaque black layer that snaps in right after the flash and covers everything (video-grid
+// included, since it sits above it in the overlay's stacking context) — this is the "corte
+// seco pra preto". Bots are removed from the DOM while this is fully opaque.
+.teleport-blackout {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  animation: teleport-blackout var(--teleport-duration, 2800ms) linear both;
 }
 
 @keyframes teleport-flash {
-  0% {
+  0%,
+  57% {
     opacity: 0;
-    transform: scale(0.3);
+    transform: scale(0.2);
   }
-  12% {
+  64% {
     opacity: 1;
-    transform: scale(1.08);
+    transform: scale(1.1);
   }
-  35% {
-    opacity: 0.85;
-    transform: scale(1);
+  68% {
+    opacity: 1;
+    transform: scale(1.3);
   }
   100% {
     opacity: 0;
-    transform: scale(1.6);
+    transform: scale(1.3);
   }
 }
 
@@ -378,27 +458,50 @@ app-video-tile {
     opacity: 0;
   }
   25% {
+    opacity: 0.55;
+  }
+  75% {
+    opacity: 0.9;
+  }
+  100% {
     opacity: 1;
   }
-  70% {
-    opacity: 0.7;
+}
+
+@keyframes teleport-motion-streaks {
+  0% {
+    opacity: 0;
+    transform: scale(2.6) rotate(0deg);
+  }
+  15% {
+    opacity: 0.45;
+  }
+  80% {
+    opacity: 0.75;
+    transform: scale(0.1) rotate(160deg);
   }
   100% {
     opacity: 0;
+    transform: scale(0.02) rotate(180deg);
   }
 }
 
 @keyframes teleport-beam {
-  0% {
+  0%,
+  18% {
     opacity: 0;
     transform: translate(-50%, -50%) rotate(0deg) scale(0.3);
   }
-  20% {
+  40% {
     opacity: 0.9;
+  }
+  68% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) rotate(220deg) scale(1.6);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(140deg) scale(1.4);
+    transform: translate(-50%, -50%) rotate(260deg) scale(1.6);
   }
 }
 
@@ -414,92 +517,144 @@ app-video-tile {
 }
 
 @keyframes teleport-scan {
-  0% {
+  0%,
+  18% {
     opacity: 0;
     transform: translateY(-6%);
   }
-  20% {
+  30% {
     opacity: 0.9;
   }
   60% {
     opacity: 0.5;
-    transform: translateY(4%);
+    transform: translateY(3%);
+  }
+  68% {
+    opacity: 0.9;
+  }
+  76% {
+    opacity: 0;
+    transform: translateY(8%);
   }
   100% {
     opacity: 0;
-    transform: translateY(10%);
   }
 }
 
 @keyframes teleport-chromatic {
-  0% {
+  0%,
+  18% {
     opacity: 0;
     transform: translateX(0);
   }
-  15% {
+  30% {
     opacity: 1;
     transform: translateX(-6px);
   }
-  30% {
+  42% {
     transform: translateX(6px);
   }
-  45% {
-    transform: translateX(-3px);
+  54% {
+    transform: translateX(-4px);
   }
-  60% {
-    opacity: 0.6;
-    transform: translateX(2px);
+  66% {
+    opacity: 0.8;
+    transform: translateX(3px);
+  }
+  70% {
+    opacity: 0;
+    transform: translateX(0);
   }
   100% {
     opacity: 0;
-    transform: translateX(0);
   }
 }
 
 @keyframes teleport-particle {
   0% {
     opacity: 0;
-    transform: rotate(calc(var(--i) * 15deg)) translateX(0) scale(1.2);
+    transform: rotate(calc(var(--i) * 15deg)) translateX(min(45vw, 480px)) scale(0.3);
   }
-  10% {
+  70% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: rotate(calc(var(--i) * 15deg)) translateX(min(45vw, 480px)) scale(0.2);
+    transform: rotate(calc(var(--i) * 15deg + 140deg)) translateX(0) scale(1.5);
+  }
+}
+
+@keyframes teleport-blackout {
+  0%,
+  67% {
+    opacity: 0;
+  }
+  68% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  92%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes teleport-tile-converge {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: blur(0);
+  }
+  55% {
+    transform: scale(0.5) rotate(200deg);
+    opacity: 0.65;
+    filter: blur(2px);
+  }
+  100% {
+    transform: scale(0.04) rotate(560deg);
+    opacity: 0;
+    filter: blur(6px);
+  }
+}
+
+@keyframes teleport-tile-reappear {
+  0% {
+    transform: scale(0.9) rotate(0deg);
+    opacity: 0;
+    filter: blur(4px);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: blur(0);
   }
 }
 
 @keyframes teleport-shake {
-  0%,
-  100% {
+  0% {
     transform: translate(0, 0);
   }
-  10% {
-    transform: translate(-6px, 3px);
-  }
-  20% {
-    transform: translate(5px, -4px);
+  15% {
+    transform: translate(-1px, 1px);
   }
   30% {
-    transform: translate(-4px, 4px);
+    transform: translate(2px, -1px);
   }
-  40% {
-    transform: translate(4px, -2px);
-  }
-  50% {
+  45% {
     transform: translate(-3px, 2px);
   }
   60% {
-    transform: translate(2px, -2px);
+    transform: translate(4px, -3px);
   }
-  70% {
-    transform: translate(-2px, 1px);
-  }
-  80% {
-    transform: translate(1px, -1px);
+  75% {
+    transform: translate(-6px, 4px);
   }
   90% {
-    transform: translate(-1px, 1px);
+    transform: translate(7px, -5px);
+  }
+  100% {
+    transform: translate(0, 0);
   }
 }
