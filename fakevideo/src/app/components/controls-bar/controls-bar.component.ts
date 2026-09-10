@@ -94,12 +94,14 @@ export class ControlsBarComponent implements OnDestroy {
     this.cancelTeleport();
     this.micMenuOpen.set(false);
     this.cameraMenuOpen.set(false);
+    this.moreMenuOpen.set(false);
   }
 
   private readonly leaveWrap = viewChild<ElementRef<HTMLElement>>('leaveWrap');
   private readonly teleportWrap = viewChild<ElementRef<HTMLElement>>('teleportWrap');
   private readonly micWrap = viewChild<ElementRef<HTMLElement>>('micWrap');
   private readonly cameraWrap = viewChild<ElementRef<HTMLElement>>('cameraWrap');
+  private readonly moreWrap = viewChild<ElementRef<HTMLElement>>('moreWrap');
 
   @HostListener('document:pointerdown', ['$event'])
   onDocumentPointerDown(event: PointerEvent): void {
@@ -118,7 +120,17 @@ export class ControlsBarComponent implements OnDestroy {
     if (this.cameraMenuOpen() && !this.cameraWrap()?.nativeElement.contains(target)) {
       this.cameraMenuOpen.set(false);
     }
+    if (this.moreMenuOpen() && !this.moreWrap()?.nativeElement.contains(target)) {
+      this.moreMenuOpen.set(false);
+    }
   }
+
+  readonly moreMenuOpen = signal(false);
+  readonly isFullscreen = signal(!!document.fullscreenElement);
+
+  private readonly onFullscreenChange = (): void => {
+    this.isFullscreen.set(!!document.fullscreenElement);
+  };
 
   readonly micMenuOpen = signal(false);
   readonly cameraMenuOpen = signal(false);
@@ -147,10 +159,13 @@ export class ControlsBarComponent implements OnDestroy {
         this.stopMicLevelMonitoring();
       }
     });
+
+    document.addEventListener('fullscreenchange', this.onFullscreenChange);
   }
 
   ngOnDestroy(): void {
     this.stopMicLevelMonitoring();
+    document.removeEventListener('fullscreenchange', this.onFullscreenChange);
   }
 
   private startMicLevelMonitoring(): void {
@@ -238,5 +253,20 @@ export class ControlsBarComponent implements OnDestroy {
   async onCameraSelected(deviceId: string): Promise<void> {
     this.selectedCameraId.set(deviceId);
     await this.livekit.switchCamera(deviceId);
+  }
+
+  toggleMoreMenu(): void {
+    this.moreMenuOpen.set(!this.moreMenuOpen());
+    this.micMenuOpen.set(false);
+    this.cameraMenuOpen.set(false);
+  }
+
+  async toggleFullscreen(): Promise<void> {
+    this.moreMenuOpen.set(false);
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
+    }
   }
 }

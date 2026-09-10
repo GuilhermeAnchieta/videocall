@@ -122,25 +122,82 @@
       </div>
     </div>
 
-    <button type="button" class="control-btn" title="Compartilhar tela (em breve)">
+    <button type="button" class="control-btn" title="Compartilhar tela">
       <span class="material-symbols-outlined">screen_share</span>
     </button>
 
-    <button type="button" class="control-btn" title="Reações (em breve)">
+    <button type="button" class="control-btn" title="Reações">
       <span class="material-symbols-outlined">mood</span>
     </button>
 
-    <button type="button" class="control-btn" title="Legendas (em breve)">
+    <button type="button" class="control-btn" title="Legendas">
       <span class="material-symbols-outlined">closed_caption</span>
     </button>
 
-    <button type="button" class="control-btn" title="Levantar a mão (em breve)">
+    <button type="button" class="control-btn" title="Levantar a mão">
       <span class="material-symbols-outlined">front_hand</span>
     </button>
 
-    <button type="button" class="control-btn" title="Mais opções (em breve)">
-      <span class="material-symbols-outlined">more_vert</span>
-    </button>
+    <div class="control-pair more-wrap" #moreWrap>
+      @if (moreMenuOpen()) {
+        <div class="more-menu" role="menu" aria-label="Mais opções">
+          <button type="button" class="more-menu-item" role="menuitem" title="Em breve">
+            <span class="material-symbols-outlined">grid_view</span>
+            <span>Ajuste a visualização</span>
+          </button>
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            (click)="toggleFullscreen()"
+          >
+            <span class="material-symbols-outlined">{{
+              isFullscreen() ? "fullscreen_exit" : "fullscreen"
+            }}</span>
+            <span>{{ isFullscreen() ? "Sair da tela cheia" : "Tela cheia" }}</span>
+          </button>
+          <button type="button" class="more-menu-item" role="menuitem" title="Em breve">
+            <span class="material-symbols-outlined">picture_in_picture</span>
+            <span>Abrir picture-in-picture</span>
+          </button>
+          <button type="button" class="more-menu-item" role="menuitem" title="Em breve">
+            <span class="material-symbols-outlined">auto_awesome</span>
+            <span>Planos de fundo e efeitos</span>
+          </button>
+          <button type="button" class="more-menu-item" role="menuitem" title="Em breve">
+            <span class="material-symbols-outlined">phone_in_talk</span>
+            <span>Ouvir a reunião por telefone</span>
+          </button>
+          <div class="more-menu-divider"></div>
+          <button type="button" class="more-menu-item" role="menuitem" title="Em breve">
+            <span class="material-symbols-outlined">report</span>
+            <span>Informar um problema</span>
+          </button>
+          <button type="button" class="more-menu-item" role="menuitem" title="Em breve">
+            <span class="material-symbols-outlined">block</span>
+            <span>Denunciar abuso</span>
+          </button>
+          <button type="button" class="more-menu-item" role="menuitem" title="Em breve">
+            <span class="material-symbols-outlined">help</span>
+            <span>Ajuda e solução de problemas</span>
+          </button>
+          <button type="button" class="more-menu-item" role="menuitem" title="Em breve">
+            <span class="material-symbols-outlined">settings</span>
+            <span>Configurações</span>
+          </button>
+        </div>
+      }
+
+      <button
+        type="button"
+        class="control-btn"
+        [class.active]="moreMenuOpen()"
+        title="Mais opções"
+        (click)="toggleMoreMenu()"
+      >
+        <span class="material-symbols-outlined">more_vert</span>
+      </button>
+    </div>
 
     @if (isOwner()) {
       <button
