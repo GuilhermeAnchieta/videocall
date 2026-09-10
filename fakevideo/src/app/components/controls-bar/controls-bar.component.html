@@ -53,9 +53,18 @@
         >
           @if (micEnabled()) {
             <span class="audio-bars" aria-hidden="true">
-              <span class="audio-bar" [style.height.%]="micLevels()[0] * 100"></span>
-              <span class="audio-bar" [style.height.%]="micLevels()[1] * 100"></span>
-              <span class="audio-bar" [style.height.%]="micLevels()[2] * 100"></span>
+              <span
+                class="audio-bar"
+                [style.height.%]="micLevels()[0] * 100"
+              ></span>
+              <span
+                class="audio-bar"
+                [style.height.%]="micLevels()[1] * 100"
+              ></span>
+              <span
+                class="audio-bar"
+                [style.height.%]="micLevels()[2] * 100"
+              ></span>
             </span>
           } @else {
             <span class="material-symbols-outlined">expand_less</span>
@@ -122,7 +131,7 @@
       </div>
     </div>
 
-    <button type="button" class="control-btn" title="Compartilhar tela (em breve)">
+    <button type="button" class="control-btn" title="Compartilhar tela">
       <span class="material-symbols-outlined">screen_share</span>
     </button>
 
@@ -130,7 +139,11 @@
       @if (reactionMenuOpen()) {
         <div class="reaction-picker" role="dialog" aria-label="Send a reaction">
           @for (emoji of REACTIONS; track emoji) {
-            <button type="button" class="reaction-option" (click)="pickReaction(emoji)">
+            <button
+              type="button"
+              class="reaction-option"
+              (click)="pickReaction(emoji)"
+            >
               {{ emoji }}
             </button>
           }
@@ -147,7 +160,7 @@
       </button>
     </div>
 
-    <button type="button" class="control-btn" title="Legendas (em breve)">
+    <button type="button" class="control-btn" title="Legendas">
       <span class="material-symbols-outlined">closed_caption</span>
     </button>
 
@@ -161,9 +174,108 @@
       <span class="material-symbols-outlined">front_hand</span>
     </button>
 
-    <button type="button" class="control-btn" title="Mais opções (em breve)">
-      <span class="material-symbols-outlined">more_vert</span>
-    </button>
+    <div class="control-pair more-wrap" #moreWrap>
+      @if (moreMenuOpen()) {
+        <div class="more-menu" role="menu" aria-label="Mais opções">
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            title="Em breve"
+          >
+            <span class="material-symbols-outlined">grid_view</span>
+            <span>Ajuste a visualização</span>
+          </button>
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            (click)="toggleFullscreen()"
+          >
+            <span class="material-symbols-outlined">{{
+              isFullscreen() ? "fullscreen_exit" : "fullscreen"
+            }}</span>
+            <span>{{
+              isFullscreen() ? "Sair da tela cheia" : "Tela cheia"
+            }}</span>
+          </button>
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            title="Em breve"
+          >
+            <span class="material-symbols-outlined">picture_in_picture</span>
+            <span>Abrir picture-in-picture</span>
+          </button>
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            title="Em breve"
+          >
+            <span class="material-symbols-outlined">auto_awesome</span>
+            <span>Planos de fundo e efeitos</span>
+          </button>
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            title="Em breve"
+          >
+            <span class="material-symbols-outlined">phone_in_talk</span>
+            <span>Ouvir a reunião por telefone</span>
+          </button>
+          <div class="more-menu-divider"></div>
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            title="Em breve"
+          >
+            <span class="material-symbols-outlined">report</span>
+            <span>Informar um problema</span>
+          </button>
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            title="Em breve"
+          >
+            <span class="material-symbols-outlined">block</span>
+            <span>Denunciar abuso</span>
+          </button>
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            title="Em breve"
+          >
+            <span class="material-symbols-outlined">help</span>
+            <span>Ajuda e solução de problemas</span>
+          </button>
+          <button
+            type="button"
+            class="more-menu-item"
+            role="menuitem"
+            title="Em breve"
+          >
+            <span class="material-symbols-outlined">settings</span>
+            <span>Configurações</span>
+          </button>
+        </div>
+      }
+
+      <button
+        type="button"
+        class="control-btn"
+        [class.active]="moreMenuOpen()"
+        title="Mais opções"
+        (click)="toggleMoreMenu()"
+      >
+        <span class="material-symbols-outlined">more_vert</span>
+      </button>
+    </div>
 
     @if (isOwner()) {
       <button

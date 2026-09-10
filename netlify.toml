@@ -21,3 +21,18 @@
   from = "/call/*"
   to = "/index.html"
   status = 200
+
+# Blocks inline <script> execution. The app has no inline scripts of its own
+# (Angular's build emits external main.js/polyfills.js/runtime.js, same-origin,
+# allowed by 'self'), so the only thing this actually disables is Netlify's own
+# "Powered by Netlify" badge, which the platform injects as an inline bootstrap
+# script at the edge (see https://docs.netlify.com/manage/projects/powered-by-netlify-badge/).
+# Turning this off in Project configuration > General is the supported way to
+# remove the badge; this header is the documented alternative when that's not
+# available. If a legitimate need for inline scripts/eval shows up later
+# (e.g. a library requiring WebAssembly), extend the value here rather than
+# dropping the header, and re-test end-to-end on a real Netlify deploy.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "script-src 'self'"
