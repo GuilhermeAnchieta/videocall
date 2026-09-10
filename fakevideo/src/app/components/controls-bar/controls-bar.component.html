@@ -43,11 +43,10 @@
         </div>
       }
 
-      <div class="pair-shape">
+      <div class="pair-shape" [class.off]="!micEnabled()">
         <button
           type="button"
           class="chevron-btn"
-          [class.off]="!micEnabled()"
           [class.active]="micMenuOpen()"
           title="Choose microphone and speaker"
           (click)="toggleMicMenu()"
@@ -91,11 +90,10 @@
         </div>
       }
 
-      <div class="pair-shape">
+      <div class="pair-shape" [class.off]="!cameraEnabled()">
         <button
           type="button"
           class="chevron-btn"
-          [class.off]="!cameraEnabled()"
           [class.active]="cameraMenuOpen()"
           title="Choose camera"
           (click)="toggleCameraMenu()"

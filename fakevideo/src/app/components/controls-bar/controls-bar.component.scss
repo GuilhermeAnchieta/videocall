@@ -153,21 +153,31 @@
   display: flex;
 }
 
-// Chevron and main icon are two separate squares side by side, not stacked — matching Meet's
-// mic/camera control (a smaller device-picker square next to the larger mute toggle).
+// One shared background spans the whole pair (chevron + icon) — the chevron has no box of
+// its own, it just sits on this background. The icon button is a smaller, inset "chip"
+// floating on top of it (see .pair-shape .control-btn below): in the unmuted state the chip
+// is transparent so the pair reads as one plain gray shape, and in the muted state the chip
+// turns light pink, popping out against the shared dark maroon behind it — matching Meet.
 .pair-shape {
+  position: relative;
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 4px;
+  height: 48px;
+  border-radius: 16px;
+  background: #3c4043;
+  overflow: hidden;
+  transition: background-color 150ms ease;
+
+  &.off {
+    background: #442726;
+  }
 }
 
 .chevron-btn {
   width: 28px;
-  height: 48px;
+  height: 100%;
   border: none;
-  border-radius: 14px;
-  background: #3c4043;
+  background: transparent;
   color: #e8eaed;
   display: flex;
   align-items: center;
@@ -181,23 +191,42 @@
   }
 
   &:hover {
-    background: #4a4d51;
-  }
-
-  // Muted state: the darker half of Meet's two-tone pair — sits next to the lighter
-  // .control-btn.off square (see above) instead of a single flat red fill.
-  &.off {
-    background: #442726;
-    color: #f6cfc9;
-
-    &:hover {
-      background: #5a3230;
-    }
+    background: rgba(255, 255, 255, 0.08);
   }
 
   &.active {
     background: #8ab4f8;
     color: #202124;
+  }
+}
+
+.pair-shape.off .chevron-btn {
+  color: #f6cfc9;
+}
+
+// The icon "chip": inset from the shared pair-shape background on every side, so the
+// background shows through as a frame around it — like the icon floating on top of the
+// shared shape instead of owning the full-height/width slot next to the chevron.
+.pair-shape .control-btn {
+  width: auto;
+  flex: 1;
+  height: auto;
+  align-self: stretch;
+  margin: 4px;
+  border-radius: 12px;
+  background: transparent;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  &.off {
+    background: #f6cfc9;
+    color: #8c1d18;
+
+    &:hover {
+      background: #f2b8b0;
+    }
   }
 }
 
@@ -357,9 +386,12 @@
     }
   }
 
+  .pair-shape {
+    height: 44px;
+  }
+
   .chevron-btn {
     width: 26px;
-    height: 44px;
   }
 }
 
@@ -386,9 +418,12 @@
     }
   }
 
+  .pair-shape {
+    height: 38px;
+  }
+
   .chevron-btn {
     width: 22px;
-    height: 38px;
 
     .material-symbols-outlined {
       font-size: 12px;
