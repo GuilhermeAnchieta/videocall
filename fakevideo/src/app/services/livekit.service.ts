@@ -133,7 +133,6 @@ export class LivekitService {
 
   /** Plays the teleport effect locally and broadcasts it so every other participant plays it too. */
   triggerTeleportEffect(): void {
-    console.trace('[teleport] triggerTeleportEffect called, pulse before=', this.teleportPulse());
     this.teleportPulse.update((n) => n + 1);
     const local = this.room?.localParticipant;
     if (!local) return;
@@ -177,7 +176,6 @@ export class LivekitService {
       })
       .on(RoomEvent.DataReceived, (payload, _participant, _kind, topic) => {
         if (topic === 'teleport') {
-          console.log('[teleport] DataReceived teleport from remote, pulse before=', this.teleportPulse());
           this.teleportPulse.update((n) => n + 1);
           return;
         }

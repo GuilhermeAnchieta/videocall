@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { VideoTileComponent } from '../../components/video-tile/video-tile.component';
 import { ControlsBarComponent } from '../../components/controls-bar/controls-bar.component';
@@ -61,9 +61,14 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     const teleportBaseline = this.livekit.teleportPulse();
     effect((onCleanup) => {
       const pulse = this.livekit.teleportPulse();
-      console.log('[teleport] effect pulse=', pulse, 'baseline=', teleportBaseline);
       if (pulse <= teleportBaseline) return;
-      this.playTeleportEffect();
+      // untracked() is essential here: playTeleportEffect() reads isOwner() and
+      // fakeParticipants.participantViews() (for the id snapshot). Without untracked(),
+      // Angular's effect() registers every signal read synchronously inside it as a
+      // dependency — so this effect would start re-running whenever the fake participant
+      // list changes (e.g. a clip added after the teleport), replaying the same stale
+      // pulse and sweeping away participants that had nothing to do with the original click.
+      untracked(() => this.playTeleportEffect());
       onCleanup(() => {
         clearTimeout(this.teleportEffectTimer);
         clearTimeout(this.teleportDropTimer);
@@ -249,7 +254,6 @@ export class CallRoomComponent implements OnInit, OnDestroy {
    * with freezing and dropping them.
    */
   private playTeleportEffect(): void {
-    console.log('[teleport] playTeleportEffect fired, isOwner=', this.isOwner());
     this.teleportActive.set(true);
     clearTimeout(this.teleportEffectTimer);
     this.teleportEffectTimer = setTimeout(
@@ -262,13 +266,11 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     // Snapshot who's here right now: a clip added during the drop delay below must not be
     // swept away by a removal that was scheduled before it even existed.
     const idsAtTrigger = new Set(this.fakeParticipants.participantViews().map((p) => p.fakeId!));
-    console.log('[teleport] snapshot idsAtTrigger=', [...idsAtTrigger]);
     this.fakeParticipants.freezeMany(idsAtTrigger);
     this.frozenFakeIds.set(idsAtTrigger);
 
     clearTimeout(this.teleportDropTimer);
     this.teleportDropTimer = setTimeout(async () => {
-      console.log('[teleport] drop timer firing, removing ids=', [...idsAtTrigger]);
       await this.fakeParticipants.removeMany(idsAtTrigger);
       this.frozenFakeIds.set(new Set());
     }, CallRoomComponent.TELEPORT_EFFECT_DURATION + CallRoomComponent.TELEPORT_DROP_DELAY);
