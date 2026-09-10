@@ -1,165 +1,175 @@
 <div class="controls-bar">
-  <div class="control-pair" #micWrap>
-    @if (micMenuOpen()) {
-      <div class="device-menu" role="dialog" aria-label="Choose microphone and speaker">
-        <label class="device-field">
-          <span class="material-symbols-outlined">mic</span>
-          <select [ngModel]="selectedMicId()" (ngModelChange)="onMicSelected($event)">
-            @for (mic of microphones(); track mic.deviceId) {
-              <option [value]="mic.deviceId">{{ mic.label || 'Microphone' }}</option>
+  <div class="bar-pill">
+    <div class="control-pair" #micWrap>
+      @if (micMenuOpen()) {
+        <div class="device-menu" role="dialog" aria-label="Choose microphone and speaker">
+          <label class="device-field">
+            <span class="material-symbols-outlined">mic</span>
+            <select [ngModel]="selectedMicId()" (ngModelChange)="onMicSelected($event)">
+              @for (mic of microphones(); track mic.deviceId) {
+                <option [value]="mic.deviceId">{{ mic.label || 'Microphone' }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="device-field">
+            <span class="material-symbols-outlined">volume_up</span>
+            @if (sinkIdSupported) {
+              <select [ngModel]="selectedSpeakerId()" (ngModelChange)="onSpeakerSelected($event)">
+                @for (speaker of speakers(); track speaker.deviceId) {
+                  <option [value]="speaker.deviceId">{{ speaker.label || 'Speaker' }}</option>
+                }
+              </select>
+            } @else {
+              <span class="hint">Your browser doesn't support changing audio output.</span>
             }
-          </select>
-        </label>
+          </label>
+        </div>
+      }
 
-        <label class="device-field">
-          <span class="material-symbols-outlined">volume_up</span>
-          @if (sinkIdSupported) {
-            <select [ngModel]="selectedSpeakerId()" (ngModelChange)="onSpeakerSelected($event)">
-              @for (speaker of speakers(); track speaker.deviceId) {
-                <option [value]="speaker.deviceId">{{ speaker.label || 'Speaker' }}</option>
-              }
-            </select>
-          } @else {
-            <span class="hint">Your browser doesn't support changing audio output.</span>
-          }
-        </label>
+      <div class="pair-shape">
+        <button
+          type="button"
+          class="chevron-btn"
+          [class.off]="!micEnabled()"
+          [class.active]="micMenuOpen()"
+          title="Choose microphone and speaker"
+          (click)="toggleMicMenu()"
+        >
+          <span class="material-symbols-outlined">expand_less</span>
+        </button>
+        <button
+          type="button"
+          class="control-btn"
+          [class.off]="!micEnabled()"
+          [title]="micEnabled() ? 'Turn off microphone' : 'Turn on microphone'"
+          (click)="toggleMic.emit()"
+        >
+          <span class="material-symbols-outlined">{{ micEnabled() ? 'mic' : 'mic_off' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="control-pair" #cameraWrap>
+      @if (cameraMenuOpen()) {
+        <div class="device-menu" role="dialog" aria-label="Choose camera">
+          <label class="device-field">
+            <span class="material-symbols-outlined">videocam</span>
+            @if (cameras().length > 0) {
+              <select [ngModel]="selectedCameraId()" (ngModelChange)="onCameraSelected($event)">
+                @for (cam of cameras(); track cam.deviceId) {
+                  <option [value]="cam.deviceId">{{ cam.label || 'Camera' }}</option>
+                }
+              </select>
+            } @else {
+              <span class="hint">No camera found.</span>
+            }
+          </label>
+        </div>
+      }
+
+      <div class="pair-shape">
+        <button
+          type="button"
+          class="chevron-btn"
+          [class.off]="!cameraEnabled()"
+          [class.active]="cameraMenuOpen()"
+          title="Choose camera"
+          (click)="toggleCameraMenu()"
+        >
+          <span class="material-symbols-outlined">expand_less</span>
+        </button>
+        <button
+          type="button"
+          class="control-btn"
+          [class.off]="!cameraEnabled()"
+          [title]="cameraEnabled() ? 'Turn off camera' : 'Turn on camera'"
+          (click)="toggleCamera.emit()"
+        >
+          <span class="material-symbols-outlined">{{ cameraEnabled() ? 'videocam' : 'videocam_off' }}</span>
+        </button>
+      </div>
+    </div>
+
+    @if (isOwner()) {
+      <button
+        type="button"
+        class="control-btn"
+        title="Clips (add fake participants)"
+        (click)="toggleClipsPanel.emit()"
+      >
+        <span class="material-symbols-outlined">movie</span>
+      </button>
+
+      <div class="teleport-wrap" #teleportWrap>
+        @if (confirmingTeleport()) {
+          <div class="confirm-popover" role="dialog" aria-label="Confirm teleport">
+            <span>Teleport all clips out of the call?</span>
+            <div class="leave-confirm-actions">
+              <button type="button" class="cancel-btn" (click)="cancelTeleport()">Cancel</button>
+              <button type="button" class="confirm-btn" (click)="confirmTeleport()">Teleport</button>
+            </div>
+          </div>
+        }
+        <button
+          type="button"
+          class="control-btn"
+          [class.armed]="confirmingTeleport()"
+          title="Teleport (makes every clip freeze and drop from the call)"
+          (click)="requestTeleport()"
+        >
+          <span class="material-symbols-outlined">bolt</span>
+        </button>
       </div>
     }
 
-    <button
-      type="button"
-      class="control-btn"
-      [class.off]="!micEnabled()"
-      [title]="micEnabled() ? 'Turn off microphone' : 'Turn on microphone'"
-      (click)="toggleMic.emit()"
-    >
-      <span class="material-symbols-outlined">{{ micEnabled() ? 'mic' : 'mic_off' }}</span>
-    </button>
-    <button
-      type="button"
-      class="chevron-btn"
-      [class.active]="micMenuOpen()"
-      title="Choose microphone and speaker"
-      (click)="toggleMicMenu()"
-    >
-      <span class="material-symbols-outlined">expand_less</span>
-    </button>
-  </div>
-
-  <div class="control-pair" #cameraWrap>
-    @if (cameraMenuOpen()) {
-      <div class="device-menu" role="dialog" aria-label="Choose camera">
-        <label class="device-field">
-          <span class="material-symbols-outlined">videocam</span>
-          @if (cameras().length > 0) {
-            <select [ngModel]="selectedCameraId()" (ngModelChange)="onCameraSelected($event)">
-              @for (cam of cameras(); track cam.deviceId) {
-                <option [value]="cam.deviceId">{{ cam.label || 'Camera' }}</option>
-              }
-            </select>
-          } @else {
-            <span class="hint">No camera found.</span>
-          }
-        </label>
-      </div>
-    }
-
-    <button
-      type="button"
-      class="control-btn"
-      [class.off]="!cameraEnabled()"
-      [title]="cameraEnabled() ? 'Turn off camera' : 'Turn on camera'"
-      (click)="toggleCamera.emit()"
-    >
-      <span class="material-symbols-outlined">{{ cameraEnabled() ? 'videocam' : 'videocam_off' }}</span>
-    </button>
-    <button
-      type="button"
-      class="chevron-btn"
-      [class.active]="cameraMenuOpen()"
-      title="Choose camera"
-      (click)="toggleCameraMenu()"
-    >
-      <span class="material-symbols-outlined">expand_less</span>
-    </button>
-  </div>
-
-  @if (isOwner()) {
-    <button
-      type="button"
-      class="control-btn"
-      title="Clips (add fake participants)"
-      (click)="toggleClipsPanel.emit()"
-    >
-      <span class="material-symbols-outlined">movie</span>
-    </button>
-
-    <div class="teleport-wrap" #teleportWrap>
-      @if (confirmingTeleport()) {
-        <div class="confirm-popover" role="dialog" aria-label="Confirm teleport">
-          <span>Teleport all clips out of the call?</span>
+    <div class="leave-wrap" #leaveWrap>
+      @if (confirmingLeave()) {
+        <div class="confirm-popover" role="dialog" aria-label="Confirm leaving the call">
+          <span>Leave the call?</span>
           <div class="leave-confirm-actions">
-            <button type="button" class="cancel-btn" (click)="cancelTeleport()">Cancel</button>
-            <button type="button" class="confirm-btn" (click)="confirmTeleport()">Teleport</button>
+            <button type="button" class="cancel-btn" (click)="cancelLeave()">Cancel</button>
+            <button type="button" class="confirm-btn" (click)="confirmLeave()">Leave</button>
           </div>
         </div>
       }
       <button
         type="button"
-        class="control-btn"
-        [class.armed]="confirmingTeleport()"
-        title="Teleport (makes every clip freeze and drop from the call)"
-        (click)="requestTeleport()"
+        class="control-btn leave"
+        [class.armed]="confirmingLeave()"
+        title="Leave the call"
+        (click)="requestLeave()"
       >
-        <span class="material-symbols-outlined">bolt</span>
+        <span class="material-symbols-outlined">call_end</span>
       </button>
     </div>
-  }
+  </div>
 
-  <button
-    type="button"
-    class="control-btn"
-    [class.active]="participantsOpen()"
-    title="Participants"
-    (click)="toggleParticipants.emit()"
-  >
-    <span class="material-symbols-outlined">group</span>
-    @if (participantsCount() > 0) {
-      <span class="count-badge">{{ participantsCount() }}</span>
-    }
-  </button>
-
-  <button
-    type="button"
-    class="control-btn"
-    [class.active]="chatOpen()"
-    title="Chat"
-    (click)="toggleChat.emit()"
-  >
-    <span class="material-symbols-outlined">chat</span>
-    @if (hasUnreadChat()) {
-      <span class="dot-badge"></span>
-    }
-  </button>
-
-  <div class="leave-wrap" #leaveWrap>
-    @if (confirmingLeave()) {
-      <div class="confirm-popover" role="dialog" aria-label="Confirm leaving the call">
-        <span>Leave the call?</span>
-        <div class="leave-confirm-actions">
-          <button type="button" class="cancel-btn" (click)="cancelLeave()">Cancel</button>
-          <button type="button" class="confirm-btn" (click)="confirmLeave()">Leave</button>
-        </div>
-      </div>
-    }
+  <div class="bar-pill secondary">
     <button
       type="button"
-      class="control-btn leave"
-      [class.armed]="confirmingLeave()"
-      title="Leave the call"
-      (click)="requestLeave()"
+      class="control-btn"
+      [class.active]="participantsOpen()"
+      title="Participants"
+      (click)="toggleParticipants.emit()"
     >
-      <span class="material-symbols-outlined">call_end</span>
+      <span class="material-symbols-outlined">group</span>
+      @if (participantsCount() > 0) {
+        <span class="count-badge">{{ participantsCount() }}</span>
+      }
+    </button>
+
+    <button
+      type="button"
+      class="control-btn"
+      [class.active]="chatOpen()"
+      title="Chat"
+      (click)="toggleChat.emit()"
+    >
+      <span class="material-symbols-outlined">chat</span>
+      @if (hasUnreadChat()) {
+        <span class="dot-badge"></span>
+      }
     </button>
   </div>
 </div>
