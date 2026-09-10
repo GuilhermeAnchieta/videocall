@@ -45,6 +45,13 @@
         </div>
       }
 
+      @if (audioPlaybackBlocked()) {
+        <button type="button" class="audio-unlock-banner" (click)="enableAudio()">
+          <span class="material-symbols-outlined">volume_off</span>
+          <span>Tap to enable audio</span>
+        </button>
+      }
+
       @if (teleportActive()) {
         <div class="teleport-overlay">
           <div class="teleport-flash"></div>
