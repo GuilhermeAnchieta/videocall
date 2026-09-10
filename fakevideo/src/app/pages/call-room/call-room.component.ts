@@ -118,6 +118,7 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   readonly localParticipant = computed(() => this.displayParticipants().find((p) => p.isLocal));
   readonly micEnabled = computed(() => this.localParticipant()?.micEnabled ?? false);
   readonly cameraEnabled = computed(() => this.localParticipant()?.cameraEnabled ?? false);
+  readonly handRaised = computed(() => this.localParticipant()?.handRaised ?? false);
 
   readonly participantsCount = computed(() => this.displayParticipants().length);
 
@@ -227,6 +228,10 @@ export class CallRoomComponent implements OnInit, OnDestroy {
 
   sendReaction(emoji: string): void {
     this.livekit.sendReaction(emoji);
+  }
+
+  toggleHand(): void {
+    this.livekit.toggleHand();
   }
 
   toggleClipsPanel(): void {

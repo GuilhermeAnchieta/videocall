@@ -22,6 +22,8 @@ export class LivekitService {
   readonly participants = signal<ParticipantView[]>([]);
   readonly chatMessages = signal<ChatMessage[]>([]);
   readonly reactions = signal<ReactionEvent[]>([]);
+  /** Identities of participants whose hand is currently raised. */
+  readonly raisedHands = signal<ReadonlySet<string>>(new Set());
   readonly connectionState = signal<ConnectionState>('disconnected');
   /** Bumped (never read for its value) whenever a teleport effect should play, be it locally triggered or received from the host. */
   readonly teleportPulse = signal(0);
@@ -85,6 +87,7 @@ export class LivekitService {
     this.room = null;
     this.participants.set([]);
     this.chatMessages.set([]);
+    this.raisedHands.set(new Set());
     this.connectionState.set('disconnected');
   }
 
@@ -162,6 +165,30 @@ export class LivekitService {
     }, REACTION_LIFETIME_MS);
   }
 
+  /** Raises/lowers the local participant's hand and broadcasts the change to everyone else. */
+  toggleHand(): void {
+    const local = this.room?.localParticipant;
+    if (!local) return;
+    const raised = !this.raisedHands().has(local.identity);
+    this.setHandRaised(local.identity, raised);
+    void local.publishData(
+      new TextEncoder().encode(JSON.stringify({ identity: local.identity, raised })),
+      { reliable: true, topic: 'hand' }
+    );
+  }
+
+  private setHandRaised(identity: string, raised: boolean): void {
+    this.raisedHands.update((set) => {
+      const next = new Set(set);
+      if (raised) next.add(identity);
+      else next.delete(identity);
+      return next;
+    });
+    // handRaised is derived into ParticipantView by toView()/sync() below, not tracked as its
+    // own reactive field on the participant objects, so the list has to be rebuilt explicitly.
+    this.sync();
+  }
+
   /** Plays the teleport effect locally and broadcasts it so every other participant plays it too. */
   triggerTeleportEffect(): void {
     this.teleportPulse.update((n) => n + 1);
@@ -223,6 +250,18 @@ export class LivekitService {
           }
           return;
         }
+        if (topic === 'hand') {
+          try {
+            const { identity, raised } = JSON.parse(new TextDecoder().decode(payload)) as {
+              identity: string;
+              raised: boolean;
+            };
+            this.setHandRaised(identity, raised);
+          } catch {
+            // ignore malformed hand-raise payloads
+          }
+          return;
+        }
         if (topic !== 'chat') return;
         try {
           const message = JSON.parse(
@@ -267,6 +306,7 @@ export class LivekitService {
       cameraEnabled: participant.isCameraEnabled,
       micEnabled: participant.isMicrophoneEnabled,
       isSpeaking: participant.isSpeaking,
+      handRaised: this.raisedHands().has(participant.identity),
       isFake: false,
     };
   }

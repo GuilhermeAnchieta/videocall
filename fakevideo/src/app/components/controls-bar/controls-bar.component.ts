@@ -28,6 +28,7 @@ export class ControlsBarComponent implements OnDestroy {
 
   readonly micEnabled = input.required<boolean>();
   readonly cameraEnabled = input.required<boolean>();
+  readonly handRaised = input<boolean>(false);
   readonly participantsOpen = input<boolean>(false);
   readonly chatOpen = input<boolean>(false);
   readonly visible = input<boolean>(true);
@@ -48,6 +49,7 @@ export class ControlsBarComponent implements OnDestroy {
   readonly toggleChat = output<void>();
   readonly triggerTeleport = output<void>();
   readonly sendReaction = output<string>();
+  readonly toggleHand = output<void>();
 
   readonly REACTIONS = ['❤️', '👍', '🎉', '👏', '😂', '😮', '😢', '🤔', '👎'];
   readonly reactionMenuOpen = signal(false);
@@ -195,8 +197,8 @@ export class ControlsBarComponent implements OnDestroy {
     // sound like speaker leakage while still responding readily to someone speaking directly
     // into the mic. It cannot fully replace using headphones when testing without them, since
     // the leaked audio and real speech share the same physical microphone.
-    const OPEN_THRESHOLD = 85;
-    const CLOSE_THRESHOLD = 55;
+    const OPEN_THRESHOLD = 62;
+    const CLOSE_THRESHOLD = 38;
     let gateOpen = false;
 
     const loop = () => {
@@ -214,7 +216,7 @@ export class ControlsBarComponent implements OnDestroy {
       if (!gateOpen) {
         this.micLevels.set([0.15, 0.15, 0.15]);
       } else {
-        const level = 0.15 + Math.min(1, (avg - CLOSE_THRESHOLD) / (210 - CLOSE_THRESHOLD)) * 0.85;
+        const level = 0.15 + Math.min(1, (avg - CLOSE_THRESHOLD) / (170 - CLOSE_THRESHOLD)) * 0.85;
         // Same level driving all 3 bars, with a per-bar multiplier for visual variety instead
         // of arbitrary frequency bins (which were more prone to reacting to a narrow-band hum).
         this.micLevels.set([level, level * 0.85 + 0.05, level * 0.7 + 0.08]);

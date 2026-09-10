@@ -189,6 +189,9 @@
 }
 
 .name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   background: rgba(0, 0, 0, 0.55);
   color: #f1f3f4;
   font-size: 13px;
@@ -198,6 +201,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease;
+
+  &.hand-raised {
+    background: #34a853;
+    color: #0d2b12;
+  }
+}
+
+.hand-icon {
+  font-size: 15px;
+  flex-shrink: 0;
 }
 
 .you-tag {

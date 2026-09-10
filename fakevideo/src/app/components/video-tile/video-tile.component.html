@@ -53,7 +53,10 @@
   }
 
   <div class="tile-footer">
-    <span class="name">
+    <span class="name" [class.hand-raised]="participant().handRaised">
+      @if (participant().handRaised) {
+        <span class="material-symbols-outlined hand-icon">front_hand</span>
+      }
       {{ participant().name }}
       @if (participant().isLocal) {
         <span class="you-tag">(you)</span>

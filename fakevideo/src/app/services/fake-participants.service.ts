@@ -39,6 +39,7 @@ export class FakeParticipantsService {
       cameraEnabled: entry.cameraEnabled,
       micEnabled: entry.micEnabled,
       isSpeaking: false,
+      handRaised: false,
       isFake: true,
       fakeId: entry.id,
     })),

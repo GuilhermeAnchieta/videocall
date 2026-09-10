@@ -151,7 +151,13 @@
       <span class="material-symbols-outlined">closed_caption</span>
     </button>
 
-    <button type="button" class="control-btn" title="Levantar a mão (em breve)">
+    <button
+      type="button"
+      class="control-btn"
+      [class.active]="handRaised()"
+      [title]="handRaised() ? 'Abaixar a mão' : 'Levantar a mão'"
+      (click)="toggleHand.emit()"
+    >
       <span class="material-symbols-outlined">front_hand</span>
     </button>
 

@@ -19,6 +19,7 @@ export interface ParticipantView {
   cameraEnabled: boolean;
   micEnabled: boolean;
   isSpeaking: boolean;
+  handRaised: boolean;
   /** "Bot" participant: a separate LiveKit connection publishing a clip, controlled by the room owner. */
   isFake: boolean;
   /** Internal id in FakeParticipantsService (present only when isFake is true). */

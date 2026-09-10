@@ -144,6 +144,7 @@
     [visible]="controlsVisible()"
     [micEnabled]="micEnabled()"
     [cameraEnabled]="cameraEnabled()"
+    [handRaised]="handRaised()"
     [isOwner]="isOwner()"
     [participantsOpen]="participantsPanelOpen()"
     [chatOpen]="chatPanelOpen()"
@@ -157,5 +158,6 @@
     (toggleChat)="toggleChatPanel()"
     (triggerTeleport)="triggerTeleport()"
     (sendReaction)="sendReaction($event)"
+    (toggleHand)="toggleHand()"
   />
 </div>
