@@ -1,8 +1,6 @@
-import type { Config, Context } from '@netlify/edge-functions';
+import type { Config, Context } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-// Edge Function rather than a classic Netlify Function for the same reason as upload-clip: a
-// clip's response body can be large, and classic functions cap responses at ~6MB too.
 export default async (_req: Request, context: Context): Promise<Response> => {
   const clipId = context.params.id;
   if (!clipId) {
