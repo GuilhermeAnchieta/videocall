@@ -1,16 +1,15 @@
 import {
-  AfterViewInit,
   Component,
   ElementRef,
   HostListener,
   OnDestroy,
   OnInit,
-  ViewChild,
   computed,
   effect,
   inject,
   signal,
-  untracked
+  untracked,
+  viewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { VideoTileComponent } from '../../components/video-tile/video-tile.component';
@@ -88,9 +87,14 @@ function computeGridLayout(
   templateUrl: './call-room.component.html',
   styleUrl: './call-room.component.scss'
 })
-export class CallRoomComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('videoGrid') private readonly videoGridRef?: ElementRef<HTMLDivElement>;
-  private gridResizeObserver?: ResizeObserver;
+export class CallRoomComponent implements OnInit, OnDestroy {
+  // A signal query (unlike @ViewChild + AfterViewInit) re-resolves once the element actually
+  // mounts: #videoGrid lives inside the `@else` branch of the connection-state check, so on
+  // first render (still 'connecting') there's nothing to find yet. The effect below reacts
+  // once it appears instead of only checking a single time right after view init — that
+  // version left the ResizeObserver never attached (grid layout stuck at 0x0, camera tile
+  // invisible) for anyone who wasn't already 'connected' by the first change detection pass.
+  private readonly videoGridRef = viewChild<ElementRef<HTMLDivElement>>('videoGrid');
   private readonly stageSize = signal({ width: 0, height: 0 });
 
   // Mirrors the ~700px breakpoint the grid used to switch at when it was CSS-only. Exposed
@@ -209,6 +213,17 @@ export class CallRoomComponent implements OnInit, AfterViewInit, OnDestroy {
       if (pulse <= teleportRevealBaseline) return;
       untracked(() => this.finishTeleportBlackout());
     });
+
+    effect((onCleanup) => {
+      const el = this.videoGridRef()?.nativeElement;
+      if (!el) return;
+      const observer = new ResizeObserver(([entry]) => {
+        const { width, height } = entry.contentRect;
+        this.stageSize.set({ width, height });
+      });
+      observer.observe(el);
+      onCleanup(() => observer.disconnect());
+    });
   }
 
   readonly displayParticipants = computed<ParticipantView[]>(() => {
@@ -291,16 +306,6 @@ export class CallRoomComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  ngAfterViewInit(): void {
-    const el = this.videoGridRef?.nativeElement;
-    if (!el) return;
-    this.gridResizeObserver = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      this.stageSize.set({ width, height });
-    });
-    this.gridResizeObserver.observe(el);
-  }
-
   ngOnDestroy(): void {
     clearTimeout(this.hideControlsTimer);
     clearTimeout(this.copyResetTimer);
@@ -308,7 +313,6 @@ export class CallRoomComponent implements OnInit, AfterViewInit, OnDestroy {
     clearTimeout(this.teleportDropTimer);
     this.teleportAwaitingEsc.set(false);
     this.teleportReappearing.set(false);
-    this.gridResizeObserver?.disconnect();
     this.mediaSource.dispose();
     this.fakeParticipants.dispose();
     void this.livekit.disconnect();
