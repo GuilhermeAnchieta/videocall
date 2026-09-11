@@ -1,16 +1,4 @@
-import {
-  Component,
-  ElementRef,
-  HostListener,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-  untracked,
-  viewChild
-} from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { VideoTileComponent } from '../../components/video-tile/video-tile.component';
 import { ControlsBarComponent } from '../../components/controls-bar/controls-bar.component';
@@ -24,55 +12,6 @@ import { RoomService } from '../../services/room.service';
 import { AudioOutputService } from '../../services/audio-output.service';
 import { TeleportSoundService } from '../../services/teleport-sound.service';
 import { ParticipantView } from '../../models/room-state';
-
-interface GridLayout {
-  columns: number;
-  tileWidth: number;
-  tileHeight: number;
-}
-
-const VIDEO_TILE_ASPECT_RATIO = 16 / 9;
-
-/**
- * Picks, among every possible column count, the one that yields the largest tile while
- * still fitting `count` tiles inside `containerWidth` x `containerHeight` (gaps included).
- * Because tileHeight is always clamped to what each row actually has available, the
- * resulting grid never exceeds the container's height — no cut-off tiles, no scrolling,
- * unlike a CSS-only grid that only reacts to width and lets row height follow the tile's
- * aspect ratio.
- */
-function computeGridLayout(
-  count: number,
-  containerWidth: number,
-  containerHeight: number,
-  gap: number,
-  aspectRatio: number
-): GridLayout {
-  if (count <= 0 || containerWidth <= 0 || containerHeight <= 0) {
-    return { columns: 1, tileWidth: 0, tileHeight: 0 };
-  }
-
-  let best: GridLayout & { area: number } = { columns: 1, tileWidth: 0, tileHeight: 0, area: 0 };
-  for (let columns = 1; columns <= count; columns++) {
-    const rows = Math.ceil(count / columns);
-    const widthPerTile = (containerWidth - gap * (columns - 1)) / columns;
-    const heightPerTile = (containerHeight - gap * (rows - 1)) / rows;
-    if (widthPerTile <= 0 || heightPerTile <= 0) continue;
-
-    let tileWidth = widthPerTile;
-    let tileHeight = tileWidth / aspectRatio;
-    if (tileHeight > heightPerTile) {
-      tileHeight = heightPerTile;
-      tileWidth = tileHeight * aspectRatio;
-    }
-
-    const area = tileWidth * tileHeight;
-    if (area > best.area) {
-      best = { columns, tileWidth, tileHeight, area };
-    }
-  }
-  return best;
-}
 
 @Component({
   selector: 'app-call-room',
@@ -88,25 +27,6 @@ function computeGridLayout(
   styleUrl: './call-room.component.scss'
 })
 export class CallRoomComponent implements OnInit, OnDestroy {
-  // A signal query (unlike @ViewChild + AfterViewInit) re-resolves once the element actually
-  // mounts: #videoGrid lives inside the `@else` branch of the connection-state check, so on
-  // first render (still 'connecting') there's nothing to find yet. The effect below reacts
-  // once it appears instead of only checking a single time right after view init — that
-  // version left the ResizeObserver never attached (grid layout stuck at 0x0, camera tile
-  // invisible) for anyone who wasn't already 'connected' by the first change detection pass.
-  private readonly videoGridRef = viewChild<ElementRef<HTMLDivElement>>('videoGrid');
-  private readonly stageSize = signal({ width: 0, height: 0 });
-
-  // Mirrors the ~700px breakpoint the grid used to switch at when it was CSS-only. Exposed
-  // separately from gridLayout (and bound as --grid-gap in the template) so the actual CSS
-  // `gap` the browser applies always matches the value the layout math assumed.
-  readonly gridGap = computed(() => (this.stageSize().width < 700 ? 10 : 16));
-
-  readonly gridLayout = computed<GridLayout>(() => {
-    const { width, height } = this.stageSize();
-    return computeGridLayout(this.participantsCount(), width, height, this.gridGap(), VIDEO_TILE_ASPECT_RATIO);
-  });
-
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly roomService = inject(RoomService);
@@ -212,17 +132,6 @@ export class CallRoomComponent implements OnInit, OnDestroy {
       const pulse = this.livekit.teleportRevealPulse();
       if (pulse <= teleportRevealBaseline) return;
       untracked(() => this.finishTeleportBlackout());
-    });
-
-    effect((onCleanup) => {
-      const el = this.videoGridRef()?.nativeElement;
-      if (!el) return;
-      const observer = new ResizeObserver(([entry]) => {
-        const { width, height } = entry.contentRect;
-        this.stageSize.set({ width, height });
-      });
-      observer.observe(el);
-      onCleanup(() => observer.disconnect());
     });
   }
 

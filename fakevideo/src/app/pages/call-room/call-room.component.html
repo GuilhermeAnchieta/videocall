@@ -32,15 +32,11 @@
         </div>
       } @else {
         <div
-          #videoGrid
           class="video-grid"
           [class.teleport-shake]="teleportEffectVisible()"
           [class.teleport-vortex]="teleportEffectVisible()"
           [style.--teleport-shake-end.ms]="teleportShakeEnd"
           [style.--teleport-duration.ms]="teleportDuration"
-          [style.grid-template-columns]="'repeat(' + gridLayout().columns + ', ' + gridLayout().tileWidth + 'px)'"
-          [style.grid-auto-rows.px]="gridLayout().tileHeight"
-          [style.--grid-gap.px]="gridGap()"
         >
           @for (participant of displayParticipants(); track participant.identity; let i = $index) {
             <app-video-tile
