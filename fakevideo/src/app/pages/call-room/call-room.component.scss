@@ -263,7 +263,9 @@ app-video-tile {
 // pulse keeps it from getting lost even if the host isn't looking right at the middle of
 // the screen when it appears.
 .teleport-reveal-button {
-  position: absolute;
+  // Fixed (not absolute within .stage) so it reliably stacks above .teleport-overlay, which
+  // is also fixed to the viewport now — see the comment on .teleport-overlay above.
+  position: fixed;
   bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
@@ -345,7 +347,11 @@ app-video-tile {
  */
 
 .teleport-overlay {
-  position: absolute;
+  // Fixed to the viewport, not absolute within .stage: .stage only covers the video-grid
+  // area above app-controls-bar, so an absolute overlay left a strip of .call-room's own
+  // background (#202124, dark gray, not black) showing at the bottom during the blackout.
+  // Fixed covers the entire screen, controls bar included.
+  position: fixed;
   inset: 0;
   z-index: 20;
   overflow: hidden;
