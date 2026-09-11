@@ -401,6 +401,18 @@
   }
 }
 
+.more-menu-item-highlight {
+  background: rgba(138, 180, 248, 0.08);
+
+  .material-symbols-outlined {
+    color: #8ab4f8;
+  }
+
+  &:hover {
+    background: rgba(138, 180, 248, 0.16);
+  }
+}
+
 .more-menu-divider {
   height: 1px;
   margin: 6px 4px;

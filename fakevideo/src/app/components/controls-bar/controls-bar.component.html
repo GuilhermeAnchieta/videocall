@@ -176,19 +176,19 @@
 
     <div class="control-pair more-wrap" #moreWrap>
       @if (moreMenuOpen()) {
-        <div class="more-menu" role="menu" aria-label="Mais opções">
+        <div class="more-menu" role="menu" aria-label="More options">
           <button
             type="button"
             class="more-menu-item"
             role="menuitem"
-            title="Em breve"
+            title="Coming soon"
           >
             <span class="material-symbols-outlined">grid_view</span>
-            <span>Ajuste a visualização</span>
+            <span>Change layout</span>
           </button>
           <button
             type="button"
-            class="more-menu-item"
+            class="more-menu-item more-menu-item-highlight"
             role="menuitem"
             (click)="toggleFullscreen()"
           >
@@ -196,72 +196,72 @@
               isFullscreen() ? "fullscreen_exit" : "fullscreen"
             }}</span>
             <span>{{
-              isFullscreen() ? "Sair da tela cheia" : "Tela cheia"
+              isFullscreen() ? "Exit full screen" : "Full screen"
             }}</span>
           </button>
           <button
             type="button"
             class="more-menu-item"
             role="menuitem"
-            title="Em breve"
+            title="Coming soon"
           >
             <span class="material-symbols-outlined">picture_in_picture</span>
-            <span>Abrir picture-in-picture</span>
+            <span>Open picture-in-picture</span>
           </button>
           <button
             type="button"
             class="more-menu-item"
             role="menuitem"
-            title="Em breve"
+            title="Coming soon"
           >
             <span class="material-symbols-outlined">auto_awesome</span>
-            <span>Planos de fundo e efeitos</span>
+            <span>Backgrounds and effects</span>
           </button>
           <button
             type="button"
             class="more-menu-item"
             role="menuitem"
-            title="Em breve"
+            title="Coming soon"
           >
             <span class="material-symbols-outlined">phone_in_talk</span>
-            <span>Ouvir a reunião por telefone</span>
+            <span>Use a phone for audio</span>
           </button>
           <div class="more-menu-divider"></div>
           <button
             type="button"
             class="more-menu-item"
             role="menuitem"
-            title="Em breve"
+            title="Coming soon"
           >
             <span class="material-symbols-outlined">report</span>
-            <span>Informar um problema</span>
+            <span>Report a problem</span>
           </button>
           <button
             type="button"
             class="more-menu-item"
             role="menuitem"
-            title="Em breve"
+            title="Coming soon"
           >
             <span class="material-symbols-outlined">block</span>
-            <span>Denunciar abuso</span>
+            <span>Report abuse</span>
           </button>
           <button
             type="button"
             class="more-menu-item"
             role="menuitem"
-            title="Em breve"
+            title="Coming soon"
           >
             <span class="material-symbols-outlined">help</span>
-            <span>Ajuda e solução de problemas</span>
+            <span>Help and troubleshooting</span>
           </button>
           <button
             type="button"
             class="more-menu-item"
             role="menuitem"
-            title="Em breve"
+            title="Coming soon"
           >
             <span class="material-symbols-outlined">settings</span>
-            <span>Configurações</span>
+            <span>Settings</span>
           </button>
         </div>
       }
@@ -270,7 +270,7 @@
         type="button"
         class="control-btn"
         [class.active]="moreMenuOpen()"
-        title="Mais opções"
+        title="More options"
         (click)="toggleMoreMenu()"
       >
         <span class="material-symbols-outlined">more_vert</span>
