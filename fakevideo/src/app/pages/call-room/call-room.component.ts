@@ -49,18 +49,16 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   readonly clipsPanelOpen = signal(false);
 
   readonly teleportActive = signal(false);
-  /** True from the moment the screen cuts to black until Esc is pressed — held indefinitely. */
-  readonly teleportAwaitingEsc = signal(false);
-  /** True only while the post-Esc fade-back-in animation is running. */
-  readonly teleportReappearing = signal(false);
   /**
-   * The host keeps watching the cameras normally the whole time (so they can judge when to
-   * press Esc) — the shake/vortex/flash/blackout effect only ever renders for everyone else.
-   * teleportActive itself stays true for the host too: it still drives the freeze/drop
-   * timers for the fake participants below, just without the visuals.
+   * True from the moment the screen cuts to black until the host reveals it for everyone —
+   * drives the host's "Reveal for everyone" button (see revealForEveryone()) and, for
+   * everyone else, keeps their own screen held fully black. The host's own screen does NOT
+   * wait on this: it fades back in on its own right when this becomes true (see
+   * autoRevealOwnScreen() in playTeleportEffect()), same as before this flag existed.
    */
-  readonly teleportEffectVisible = computed(() => this.teleportActive() && !this.isOwner());
-  readonly teleportReappearVisible = computed(() => this.teleportReappearing() && !this.isOwner());
+  readonly teleportAwaitingReveal = signal(false);
+  /** True only while a fade-back-in animation (the host's own, or everyone else's after the host reveals) is running. */
+  readonly teleportReappearing = signal(false);
   readonly frozenFakeIds = signal<ReadonlySet<string>>(new Set());
   readonly teleportParticles = Array.from({ length: 24 }, (_, i) => i);
 
@@ -73,9 +71,10 @@ export class CallRoomComponent implements OnInit, OnDestroy {
    *   TELEPORT_PHASE_SHAKE_END -> TELEPORT_PHASE_VORTEX_END : vortex distortion, tiles get sucked in
    *   TELEPORT_PHASE_VORTEX_END -> TELEPORT_PHASE_FLASH_END : convergence + white flash
    *   TELEPORT_PHASE_FLASH_END -> TELEPORT_PHASE_BLACKOUT_END : hard cut to black (bots dropped here)
-   * From TELEPORT_PHASE_BLACKOUT_END the screen stays fully black and holds indefinitely —
-   * it only fades back in once the user presses Esc (see onTeleportEscape()/finishTeleportBlackout()
-   * below), which then runs for TELEPORT_REAPPEAR_DURATION before the overlay is torn down.
+   * From TELEPORT_PHASE_BLACKOUT_END: the host's own screen fades back in automatically
+   * (autoRevealOwnScreen()) while everyone else's stays fully black until the host clicks
+   * "Reveal for everyone" (revealForEveryone()) — see finishTeleportBlackout(). Either way the
+   * fade-back-in itself takes TELEPORT_REAPPEAR_DURATION before the overlay is torn down.
    */
   private static readonly TELEPORT_PHASE_SHAKE_END = 1200;
   private static readonly TELEPORT_PHASE_VORTEX_END = 4500;
@@ -88,6 +87,8 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   private static readonly TELEPORT_DROP_AT = 5600;
   private teleportEffectTimer?: ReturnType<typeof setTimeout>;
   private teleportDropTimer?: ReturnType<typeof setTimeout>;
+  /** Separate from teleportEffectTimer so the host's automatic self-reveal never races with finishTeleportBlackout()'s own use of that timer. */
+  private ownReappearTimer?: ReturnType<typeof setTimeout>;
 
   // Exposed as CSS custom properties (see the [style.--teleport-*] bindings in the template)
   // so the SCSS animation-delay/duration values that depend on phase boundaries read from a
@@ -118,7 +119,8 @@ export class CallRoomComponent implements OnInit, OnDestroy {
       onCleanup(() => {
         clearTimeout(this.teleportEffectTimer);
         clearTimeout(this.teleportDropTimer);
-        this.teleportAwaitingEsc.set(false);
+        clearTimeout(this.ownReappearTimer);
+        this.teleportAwaitingReveal.set(false);
         this.teleportReappearing.set(false);
       });
     });
@@ -220,7 +222,8 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     clearTimeout(this.copyResetTimer);
     clearTimeout(this.teleportEffectTimer);
     clearTimeout(this.teleportDropTimer);
-    this.teleportAwaitingEsc.set(false);
+    clearTimeout(this.ownReappearTimer);
+    this.teleportAwaitingReveal.set(false);
     this.teleportReappearing.set(false);
     this.mediaSource.dispose();
     this.fakeParticipants.dispose();
@@ -318,25 +321,43 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Esc is the only way out of the post-teleport blackout, and only the host can press it —
-   * everyone else is staring at a fully black screen with no visible cue, waiting on the
-   * host. Only triggers livekit.triggerTeleportReveal(); the actual state change happens in
-   * finishTeleportBlackout() once the reveal pulse comes back around (see the effect in the
-   * constructor), so it runs the exact same way for the host as for everyone else.
+   * The prominent on-screen button (see call-room.component.html) that the host uses to end
+   * the blackout for everyone else once they've seen enough. Esc does the same thing as a
+   * shortcut. Only triggers livekit.triggerTeleportReveal(); the actual state change happens
+   * in finishTeleportBlackout() once the reveal pulse comes back around (see the effect in
+   * the constructor), so it runs the exact same way for the host as for everyone else.
    */
-  @HostListener('document:keydown.escape')
-  onTeleportEscape(): void {
+  revealForEveryone(): void {
     if (!this.isOwner()) return;
-    if (!this.teleportAwaitingEsc()) return;
+    if (!this.teleportAwaitingReveal()) return;
     this.livekit.triggerTeleportReveal();
   }
 
+  @HostListener('document:keydown.escape')
+  onTeleportEscape(): void {
+    this.revealForEveryone();
+  }
+
   private finishTeleportBlackout(): void {
-    if (!this.teleportAwaitingEsc()) return;
-    this.teleportAwaitingEsc.set(false);
+    if (!this.teleportAwaitingReveal()) return;
+    this.teleportAwaitingReveal.set(false);
     this.teleportReappearing.set(true);
     clearTimeout(this.teleportEffectTimer);
     this.teleportEffectTimer = setTimeout(() => {
+      this.teleportActive.set(false);
+      this.teleportReappearing.set(false);
+    }, CallRoomComponent.TELEPORT_REAPPEAR_DURATION);
+  }
+
+  /**
+   * Fades the host's own screen back in right as the blackout starts, independently of
+   * teleportAwaitingReveal — that flag stays true (driving the "Reveal for everyone" button)
+   * until the host explicitly reveals it for the guests, who are still fully black.
+   */
+  private autoRevealOwnScreen(): void {
+    this.teleportReappearing.set(true);
+    clearTimeout(this.ownReappearTimer);
+    this.ownReappearTimer = setTimeout(() => {
       this.teleportActive.set(false);
       this.teleportReappearing.set(false);
     }, CallRoomComponent.TELEPORT_REAPPEAR_DURATION);
@@ -350,17 +371,19 @@ export class CallRoomComponent implements OnInit, OnDestroy {
    */
   private playTeleportEffect(): void {
     this.teleportActive.set(true);
-    this.teleportAwaitingEsc.set(false);
+    this.teleportAwaitingReveal.set(false);
     this.teleportReappearing.set(false);
     this.teleportSound.play();
     clearTimeout(this.teleportEffectTimer);
-    // Runs the shake/vortex/flash/blackout phases, then holds the screen fully black —
-    // it does NOT flip teleportActive off; that only happens once the user presses Esc
-    // (see onTeleportEscape()/finishTeleportBlackout() above).
-    this.teleportEffectTimer = setTimeout(
-      () => this.teleportAwaitingEsc.set(true),
-      CallRoomComponent.TELEPORT_PHASE_BLACKOUT_END
-    );
+    clearTimeout(this.ownReappearTimer);
+    // Runs the shake/vortex/flash/blackout phases the same way for everyone, then: the host's
+    // own screen fades back in right away (autoRevealOwnScreen()), while teleportAwaitingReveal
+    // stays true — holding everyone else's screen fully black — until the host explicitly
+    // reveals it (see revealForEveryone()/finishTeleportBlackout() above).
+    this.teleportEffectTimer = setTimeout(() => {
+      this.teleportAwaitingReveal.set(true);
+      if (this.isOwner()) this.autoRevealOwnScreen();
+    }, CallRoomComponent.TELEPORT_PHASE_BLACKOUT_END);
 
     if (!this.isOwner()) return;
 

@@ -33,16 +33,16 @@
       } @else {
         <div
           class="video-grid"
-          [class.teleport-shake]="teleportEffectVisible()"
-          [class.teleport-vortex]="teleportEffectVisible()"
+          [class.teleport-shake]="teleportActive()"
+          [class.teleport-vortex]="teleportActive()"
           [style.--teleport-shake-end.ms]="teleportShakeEnd"
           [style.--teleport-duration.ms]="teleportDuration"
         >
           @for (participant of displayParticipants(); track participant.identity; let i = $index) {
             <app-video-tile
               class="teleport-tile"
-              [class.teleport-converge]="teleportEffectVisible()"
-              [class.teleport-reappear]="teleportReappearVisible()"
+              [class.teleport-converge]="teleportActive()"
+              [class.teleport-reappear]="teleportReappearing()"
               [style.--tile-i]="i"
               [style.--teleport-shake-end.ms]="teleportShakeEnd"
               [style.--teleport-vortex-end.ms]="teleportVortexEnd"
@@ -76,7 +76,7 @@
         </button>
       }
 
-      @if (teleportEffectVisible()) {
+      @if (teleportActive()) {
         <div
           class="teleport-overlay"
           [style.--teleport-shake-end.ms]="teleportShakeEnd"
@@ -127,6 +127,13 @@
           </div>
           <div class="teleport-blackout" [class.teleport-reappear]="teleportReappearing()"></div>
         </div>
+      }
+
+      @if (isOwner() && teleportAwaitingReveal()) {
+        <button type="button" class="teleport-reveal-button" (click)="revealForEveryone()">
+          <span class="material-symbols-outlined">visibility</span>
+          <span>Reveal for everyone</span>
+        </button>
       }
     </div>
 
