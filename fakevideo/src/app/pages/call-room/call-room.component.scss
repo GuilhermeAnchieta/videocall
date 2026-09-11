@@ -169,37 +169,29 @@
  * Every tile is the same size and aspect ratio (16:9) for everyone, no matter how many
  * participants are in the call or the screen shape of whoever's watching — a phone held
  * upright doesn't become a giant "portrait" tile, it stays a standard rectangle like the
- * others, just centered. auto-fit wraps and grows the grid as needed.
+ * others, just centered.
  *
- * The min track size is pinned to ~1/3 of the row (via max() with an absolute floor) so at
- * most 3 tiles ever share a row — a 4th participant can't squeeze in beside the first 3, it
- * wraps to the row below instead.
+ * grid-template-columns/grid-auto-rows are set inline from CallRoomComponent.gridLayout
+ * (computed from participantsCount() + a ResizeObserver on this element), which picks
+ * the tile size that maximizes area while still guaranteeing every row fits inside the
+ * available height — unlike a CSS-only auto-fit/minmax grid (which only reacts to width
+ * and lets row height follow from the tile's aspect ratio), this can never produce more
+ * rows than fit on screen, so the grid never needs to scroll or get cut off.
  */
 .video-grid {
   height: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(max(240px, calc(33.333% - 16px)), 1fr));
-  grid-auto-rows: min-content;
   align-content: center;
   justify-content: center;
   justify-items: center;
   align-items: center;
-  gap: 16px;
-  overflow-y: auto;
+  gap: var(--grid-gap, 16px);
 }
 
 app-video-tile {
   display: block;
   width: 100%;
-  max-width: 560px;
-  aspect-ratio: 16 / 9;
-}
-
-@media (max-width: 700px) {
-  .video-grid {
-    grid-template-columns: repeat(auto-fit, minmax(max(150px, calc(50% - 10px)), 1fr));
-    gap: 10px;
-  }
+  height: 100%;
 }
 
 // Floating emoji reactions (Meet-style): each bubble rises from near the bottom-left of the
@@ -331,17 +323,20 @@ app-video-tile {
 }
 
 // Each tile spins on its own axis, shrinks, and fades out — "sucked" toward the vortex core —
-// during the vortex phase, then fades back in during the reappear phase. A small per-index
-// stagger (--tile-i) keeps the convergence from looking perfectly mechanical.
+// during the vortex phase. A small per-index stagger (--tile-i) keeps the convergence from
+// looking perfectly mechanical.
 .teleport-tile.teleport-converge {
-  animation:
-    teleport-tile-converge calc(var(--teleport-vortex-end, 1600ms) - var(--teleport-shake-end, 500ms))
-      cubic-bezier(0.61, -0.02, 0.85, 0.6) forwards,
-    teleport-tile-reappear calc(var(--teleport-duration, 2800ms) - var(--teleport-blackout-end, 2300ms))
-      ease-out forwards;
-  animation-delay:
-    calc(var(--teleport-shake-end, 500ms) + var(--tile-i, 0) * 12ms),
-    var(--teleport-blackout-end, 2300ms);
+  animation: teleport-tile-converge calc(var(--teleport-vortex-end, 1600ms) - var(--teleport-shake-end, 500ms))
+    cubic-bezier(0.61, -0.02, 0.85, 0.6) forwards;
+  animation-delay: calc(var(--teleport-shake-end, 500ms) + var(--tile-i, 0) * 12ms);
+  will-change: transform, opacity, filter;
+}
+
+// Fades tiles back in once the user presses Esc to leave the (indefinitely held) blackout —
+// see teleportReappearing in call-room.component.ts. Driven by a class toggle rather than a
+// fixed animation-delay because how long the blackout holds is now up to the user, not a timer.
+.teleport-tile.teleport-reappear {
+  animation: teleport-tile-reappear var(--teleport-reappear-duration, 1000ms) ease-out forwards;
   will-change: transform, opacity, filter;
 }
 
@@ -479,13 +474,20 @@ app-video-tile {
 
 // Opaque black layer that snaps in right after the flash and covers everything (video-grid
 // included, since it sits above it in the overlay's stacking context) — this is the "corte
-// seco pra preto". Bots are removed from the DOM while this is fully opaque.
+// seco pra preto". Bots are removed from the DOM while this is fully opaque. Unlike the rest
+// of the effect, this does NOT fade itself back out on a timer: it holds at full opacity
+// (animation-fill-mode forwards) until the user presses Esc, which adds .teleport-reappear
+// below to actually fade it out.
 .teleport-blackout {
   position: absolute;
   inset: 0;
   background: #000;
   opacity: 0;
-  animation: teleport-blackout var(--teleport-duration, 2800ms) linear both;
+  animation: teleport-blackout var(--teleport-blackout-end, 2300ms) linear forwards;
+}
+
+.teleport-blackout.teleport-reappear {
+  animation: teleport-blackout-fadeout var(--teleport-reappear-duration, 1000ms) linear forwards;
 }
 
 @keyframes teleport-flash {
@@ -639,18 +641,24 @@ app-video-tile {
   }
 }
 
+// Snaps to opaque black right as the flash ends (~87% of the blackout-end duration, i.e.
+// FLASH_END within TELEPORT_PHASE_BLACKOUT_END) and stays there — this animation no longer
+// fades itself back out, see .teleport-blackout.teleport-reappear above.
 @keyframes teleport-blackout {
   0%,
-  73% {
+  86% {
     opacity: 0;
   }
-  74% {
+  87%,
+  100% {
     opacity: 1;
   }
-  86% {
+}
+
+@keyframes teleport-blackout-fadeout {
+  0% {
     opacity: 1;
   }
-  94%,
   100% {
     opacity: 0;
   }

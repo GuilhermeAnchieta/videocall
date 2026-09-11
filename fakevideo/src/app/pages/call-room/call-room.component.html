@@ -32,21 +32,27 @@
         </div>
       } @else {
         <div
+          #videoGrid
           class="video-grid"
-          [class.teleport-shake]="teleportActive()"
-          [class.teleport-vortex]="teleportActive()"
+          [class.teleport-shake]="teleportEffectVisible()"
+          [class.teleport-vortex]="teleportEffectVisible()"
           [style.--teleport-shake-end.ms]="teleportShakeEnd"
           [style.--teleport-duration.ms]="teleportDuration"
+          [style.grid-template-columns]="'repeat(' + gridLayout().columns + ', ' + gridLayout().tileWidth + 'px)'"
+          [style.grid-auto-rows.px]="gridLayout().tileHeight"
+          [style.--grid-gap.px]="gridGap()"
         >
           @for (participant of displayParticipants(); track participant.identity; let i = $index) {
             <app-video-tile
               class="teleport-tile"
-              [class.teleport-converge]="teleportActive()"
+              [class.teleport-converge]="teleportEffectVisible()"
+              [class.teleport-reappear]="teleportReappearVisible()"
               [style.--tile-i]="i"
               [style.--teleport-shake-end.ms]="teleportShakeEnd"
               [style.--teleport-vortex-end.ms]="teleportVortexEnd"
               [style.--teleport-blackout-end.ms]="teleportBlackoutEnd"
               [style.--teleport-duration.ms]="teleportDuration"
+              [style.--teleport-reappear-duration.ms]="teleportReappearDuration"
               [participant]="participant"
               [isOwner]="isOwner()"
               [frozen]="!!participant.fakeId && frozenFakeIds().has(participant.fakeId)"
@@ -74,7 +80,7 @@
         </button>
       }
 
-      @if (teleportActive()) {
+      @if (teleportEffectVisible()) {
         <div
           class="teleport-overlay"
           [style.--teleport-shake-end.ms]="teleportShakeEnd"
@@ -82,6 +88,7 @@
           [style.--teleport-flash-end.ms]="teleportFlashEnd"
           [style.--teleport-blackout-end.ms]="teleportBlackoutEnd"
           [style.--teleport-duration.ms]="teleportDuration"
+          [style.--teleport-reappear-duration.ms]="teleportReappearDuration"
         >
           <svg class="teleport-vortex-defs" width="0" height="0" aria-hidden="true">
             <filter id="teleport-vortex-filter" color-interpolation-filters="sRGB">
@@ -122,7 +129,7 @@
               <span class="teleport-particle" [style.--i]="p"></span>
             }
           </div>
-          <div class="teleport-blackout"></div>
+          <div class="teleport-blackout" [class.teleport-reappear]="teleportReappearing()"></div>
         </div>
       }
     </div>

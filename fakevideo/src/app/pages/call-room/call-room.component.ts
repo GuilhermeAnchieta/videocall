@@ -1,4 +1,17 @@
-import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { VideoTileComponent } from '../../components/video-tile/video-tile.component';
 import { ControlsBarComponent } from '../../components/controls-bar/controls-bar.component';
@@ -13,6 +26,55 @@ import { AudioOutputService } from '../../services/audio-output.service';
 import { TeleportSoundService } from '../../services/teleport-sound.service';
 import { ParticipantView } from '../../models/room-state';
 
+interface GridLayout {
+  columns: number;
+  tileWidth: number;
+  tileHeight: number;
+}
+
+const VIDEO_TILE_ASPECT_RATIO = 16 / 9;
+
+/**
+ * Picks, among every possible column count, the one that yields the largest tile while
+ * still fitting `count` tiles inside `containerWidth` x `containerHeight` (gaps included).
+ * Because tileHeight is always clamped to what each row actually has available, the
+ * resulting grid never exceeds the container's height — no cut-off tiles, no scrolling,
+ * unlike a CSS-only grid that only reacts to width and lets row height follow the tile's
+ * aspect ratio.
+ */
+function computeGridLayout(
+  count: number,
+  containerWidth: number,
+  containerHeight: number,
+  gap: number,
+  aspectRatio: number
+): GridLayout {
+  if (count <= 0 || containerWidth <= 0 || containerHeight <= 0) {
+    return { columns: 1, tileWidth: 0, tileHeight: 0 };
+  }
+
+  let best: GridLayout & { area: number } = { columns: 1, tileWidth: 0, tileHeight: 0, area: 0 };
+  for (let columns = 1; columns <= count; columns++) {
+    const rows = Math.ceil(count / columns);
+    const widthPerTile = (containerWidth - gap * (columns - 1)) / columns;
+    const heightPerTile = (containerHeight - gap * (rows - 1)) / rows;
+    if (widthPerTile <= 0 || heightPerTile <= 0) continue;
+
+    let tileWidth = widthPerTile;
+    let tileHeight = tileWidth / aspectRatio;
+    if (tileHeight > heightPerTile) {
+      tileHeight = heightPerTile;
+      tileWidth = tileHeight * aspectRatio;
+    }
+
+    const area = tileWidth * tileHeight;
+    if (area > best.area) {
+      best = { columns, tileWidth, tileHeight, area };
+    }
+  }
+  return best;
+}
+
 @Component({
   selector: 'app-call-room',
   standalone: true,
@@ -26,7 +88,21 @@ import { ParticipantView } from '../../models/room-state';
   templateUrl: './call-room.component.html',
   styleUrl: './call-room.component.scss'
 })
-export class CallRoomComponent implements OnInit, OnDestroy {
+export class CallRoomComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('videoGrid') private readonly videoGridRef?: ElementRef<HTMLDivElement>;
+  private gridResizeObserver?: ResizeObserver;
+  private readonly stageSize = signal({ width: 0, height: 0 });
+
+  // Mirrors the ~700px breakpoint the grid used to switch at when it was CSS-only. Exposed
+  // separately from gridLayout (and bound as --grid-gap in the template) so the actual CSS
+  // `gap` the browser applies always matches the value the layout math assumed.
+  readonly gridGap = computed(() => (this.stageSize().width < 700 ? 10 : 16));
+
+  readonly gridLayout = computed<GridLayout>(() => {
+    const { width, height } = this.stageSize();
+    return computeGridLayout(this.participantsCount(), width, height, this.gridGap(), VIDEO_TILE_ASPECT_RATIO);
+  });
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly roomService = inject(RoomService);
@@ -49,6 +125,18 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   readonly clipsPanelOpen = signal(false);
 
   readonly teleportActive = signal(false);
+  /** True from the moment the screen cuts to black until Esc is pressed — held indefinitely. */
+  readonly teleportAwaitingEsc = signal(false);
+  /** True only while the post-Esc fade-back-in animation is running. */
+  readonly teleportReappearing = signal(false);
+  /**
+   * The host keeps watching the cameras normally the whole time (so they can judge when to
+   * press Esc) — the shake/vortex/flash/blackout effect only ever renders for everyone else.
+   * teleportActive itself stays true for the host too: it still drives the freeze/drop
+   * timers for the fake participants below, just without the visuals.
+   */
+  readonly teleportEffectVisible = computed(() => this.teleportActive() && !this.isOwner());
+  readonly teleportReappearVisible = computed(() => this.teleportReappearing() && !this.isOwner());
   readonly frozenFakeIds = signal<ReadonlySet<string>>(new Set());
   readonly teleportParticles = Array.from({ length: 24 }, (_, i) => i);
 
@@ -61,13 +149,17 @@ export class CallRoomComponent implements OnInit, OnDestroy {
    *   TELEPORT_PHASE_SHAKE_END -> TELEPORT_PHASE_VORTEX_END : vortex distortion, tiles get sucked in
    *   TELEPORT_PHASE_VORTEX_END -> TELEPORT_PHASE_FLASH_END : convergence + white flash
    *   TELEPORT_PHASE_FLASH_END -> TELEPORT_PHASE_BLACKOUT_END : hard cut to black (bots dropped here)
-   *   TELEPORT_PHASE_BLACKOUT_END -> TELEPORT_EFFECT_DURATION : fade back in
+   * From TELEPORT_PHASE_BLACKOUT_END the screen stays fully black and holds indefinitely —
+   * it only fades back in once the user presses Esc (see onTeleportEscape()/finishTeleportBlackout()
+   * below), which then runs for TELEPORT_REAPPEAR_DURATION before the overlay is torn down.
    */
   private static readonly TELEPORT_PHASE_SHAKE_END = 1200;
   private static readonly TELEPORT_PHASE_VORTEX_END = 4500;
   private static readonly TELEPORT_PHASE_FLASH_END = 5200;
   private static readonly TELEPORT_PHASE_BLACKOUT_END = 6000;
   private static readonly TELEPORT_EFFECT_DURATION = 7000;
+  private static readonly TELEPORT_REAPPEAR_DURATION =
+    CallRoomComponent.TELEPORT_EFFECT_DURATION - CallRoomComponent.TELEPORT_PHASE_BLACKOUT_END;
   /** Exactly mid-blackout (between FLASH_END and BLACKOUT_END) so nobody sees the bots vanish. */
   private static readonly TELEPORT_DROP_AT = 5600;
   private teleportEffectTimer?: ReturnType<typeof setTimeout>;
@@ -81,6 +173,7 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   readonly teleportFlashEnd = CallRoomComponent.TELEPORT_PHASE_FLASH_END;
   readonly teleportBlackoutEnd = CallRoomComponent.TELEPORT_PHASE_BLACKOUT_END;
   readonly teleportDuration = CallRoomComponent.TELEPORT_EFFECT_DURATION;
+  readonly teleportReappearDuration = CallRoomComponent.TELEPORT_REAPPEAR_DURATION;
 
   constructor() {
     // Baseline captured at construction time, not a hardcoded 0: teleportPulse is a
@@ -101,7 +194,20 @@ export class CallRoomComponent implements OnInit, OnDestroy {
       onCleanup(() => {
         clearTimeout(this.teleportEffectTimer);
         clearTimeout(this.teleportDropTimer);
+        this.teleportAwaitingEsc.set(false);
+        this.teleportReappearing.set(false);
       });
+    });
+
+    // Same baseline/untracked pattern as teleportPulse above, but for the reveal: only the
+    // host can end the blackout (see onTeleportEscape()), and it has to reach every
+    // participant over the data channel since each of them is holding their own local
+    // blackout — a plain local Esc keypress on a guest's machine must do nothing.
+    const teleportRevealBaseline = this.livekit.teleportRevealPulse();
+    effect(() => {
+      const pulse = this.livekit.teleportRevealPulse();
+      if (pulse <= teleportRevealBaseline) return;
+      untracked(() => this.finishTeleportBlackout());
     });
   }
 
@@ -185,11 +291,24 @@ export class CallRoomComponent implements OnInit, OnDestroy {
     }
   }
 
+  ngAfterViewInit(): void {
+    const el = this.videoGridRef?.nativeElement;
+    if (!el) return;
+    this.gridResizeObserver = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      this.stageSize.set({ width, height });
+    });
+    this.gridResizeObserver.observe(el);
+  }
+
   ngOnDestroy(): void {
     clearTimeout(this.hideControlsTimer);
     clearTimeout(this.copyResetTimer);
     clearTimeout(this.teleportEffectTimer);
     clearTimeout(this.teleportDropTimer);
+    this.teleportAwaitingEsc.set(false);
+    this.teleportReappearing.set(false);
+    this.gridResizeObserver?.disconnect();
     this.mediaSource.dispose();
     this.fakeParticipants.dispose();
     void this.livekit.disconnect();
@@ -286,6 +405,31 @@ export class CallRoomComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Esc is the only way out of the post-teleport blackout, and only the host can press it —
+   * everyone else is staring at a fully black screen with no visible cue, waiting on the
+   * host. Only triggers livekit.triggerTeleportReveal(); the actual state change happens in
+   * finishTeleportBlackout() once the reveal pulse comes back around (see the effect in the
+   * constructor), so it runs the exact same way for the host as for everyone else.
+   */
+  @HostListener('document:keydown.escape')
+  onTeleportEscape(): void {
+    if (!this.isOwner()) return;
+    if (!this.teleportAwaitingEsc()) return;
+    this.livekit.triggerTeleportReveal();
+  }
+
+  private finishTeleportBlackout(): void {
+    if (!this.teleportAwaitingEsc()) return;
+    this.teleportAwaitingEsc.set(false);
+    this.teleportReappearing.set(true);
+    clearTimeout(this.teleportEffectTimer);
+    this.teleportEffectTimer = setTimeout(() => {
+      this.teleportActive.set(false);
+      this.teleportReappearing.set(false);
+    }, CallRoomComponent.TELEPORT_REAPPEAR_DURATION);
+  }
+
+  /**
    * Runs for everyone in the room (triggered locally by the host, or received over the
    * data channel by everyone else) so the visual effect plays in sync. Only the host's
    * browser actually owns the fake participants' connections, so only it follows through
@@ -293,11 +437,16 @@ export class CallRoomComponent implements OnInit, OnDestroy {
    */
   private playTeleportEffect(): void {
     this.teleportActive.set(true);
+    this.teleportAwaitingEsc.set(false);
+    this.teleportReappearing.set(false);
     this.teleportSound.play();
     clearTimeout(this.teleportEffectTimer);
+    // Runs the shake/vortex/flash/blackout phases, then holds the screen fully black —
+    // it does NOT flip teleportActive off; that only happens once the user presses Esc
+    // (see onTeleportEscape()/finishTeleportBlackout() above).
     this.teleportEffectTimer = setTimeout(
-      () => this.teleportActive.set(false),
-      CallRoomComponent.TELEPORT_EFFECT_DURATION
+      () => this.teleportAwaitingEsc.set(true),
+      CallRoomComponent.TELEPORT_PHASE_BLACKOUT_END
     );
 
     if (!this.isOwner()) return;

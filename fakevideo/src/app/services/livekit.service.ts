@@ -27,6 +27,8 @@ export class LivekitService {
   readonly connectionState = signal<ConnectionState>('disconnected');
   /** Bumped (never read for its value) whenever a teleport effect should play, be it locally triggered or received from the host. */
   readonly teleportPulse = signal(0);
+  /** Bumped whenever the host ends the post-teleport blackout for everyone (Esc), be it locally triggered or received. */
+  readonly teleportRevealPulse = signal(0);
 
   get localParticipant(): LocalParticipant | undefined {
     return this.room?.localParticipant;
@@ -39,9 +41,11 @@ export class LivekitService {
   ): Promise<void> {
     const { micEnabled = true, cameraEnabled = true } = options;
     this.connectionState.set('connecting');
-    // teleportPulse is a service-wide signal that outlives a single call — reset it so a
-    // teleport played in a previous room doesn't replay itself the instant this one mounts.
+    // teleportPulse/teleportRevealPulse are service-wide signals that outlive a single call —
+    // reset them so a teleport played in a previous room doesn't replay itself the instant
+    // this one mounts.
     this.teleportPulse.set(0);
+    this.teleportRevealPulse.set(0);
     const room = new Room({
       adaptiveStream: true,
       dynacast: true,
@@ -200,6 +204,17 @@ export class LivekitService {
     });
   }
 
+  /** Ends the post-teleport blackout locally and broadcasts it so every other participant's screen fades back in too. */
+  triggerTeleportReveal(): void {
+    this.teleportRevealPulse.update((n) => n + 1);
+    const local = this.room?.localParticipant;
+    if (!local) return;
+    void local.publishData(new TextEncoder().encode('teleport-reveal'), {
+      reliable: true,
+      topic: 'teleport-reveal',
+    });
+  }
+
   getLocalVideoTrack(): LocalTrack | undefined {
     return this.room?.localParticipant.getTrackPublication(Track.Source.Camera)
       ?.track;
@@ -235,6 +250,10 @@ export class LivekitService {
       .on(RoomEvent.DataReceived, (payload, _participant, _kind, topic) => {
         if (topic === 'teleport') {
           this.teleportPulse.update((n) => n + 1);
+          return;
+        }
+        if (topic === 'teleport-reveal') {
+          this.teleportRevealPulse.update((n) => n + 1);
           return;
         }
         if (topic === 'reaction') {
